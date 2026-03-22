@@ -1,0 +1,42 @@
+ <project xmlns="http://maven.apache.org/POM/4.0.0">
+<modelVersion>4.0.0</modelVersion>
+<groupId>com.example</groupId>
+<artifactId>microservices-parent</artifactId>
+<version>1.0.0</version>
+<packaging>pom</packaging>
+
+<modules>
+<module>gateway-service</module>
+<module>user-service</module>
+<module>order-service</module>
+<module>content-service</module>
+<module>product-catalog-service</module>
+<module>inventory-service</module>
+<module>common-lib</module>
+</modules>
+
+<properties>
+    <java.version>17</java.version>
+    <spring.boot.version>3.2.5</spring.boot.version>
+</properties>
+
+<dependencyManagement>
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-dependencies</artifactId>
+            <version>${spring.boot.version}</version>
+            <type>pom</type>
+            <scope>import</scope>
+        </dependency>
+    </dependencies>
+</dependencyManagement>
+
+     <dependencies>
+         <dependency>
+             <groupId>org.springframework.boot</groupId>
+             <artifactId>spring-boot-starter-actuator</artifactId>
+         </dependency>
+     </dependencies>
+
+</project>

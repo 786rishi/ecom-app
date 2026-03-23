@@ -1,0 +1,58 @@
+name: CD frontend-react (S3)
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'frontend-react/**'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # -------------------------
+      # Setup Node
+      # -------------------------
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Install dependencies
+        working-directory: frontend-react
+        run: npm install
+
+      - name: Build React app
+        working-directory: frontend-react
+        run: npm run build
+
+      # -------------------------
+      # AWS Login
+      # -------------------------
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          region: ap-south-1
+
+      # -------------------------
+      # Deploy to S3
+      # -------------------------
+      - name: Upload to S3
+        run: |
+          aws s3 sync frontend-react/build s3://${{ secrets.S3_BUCKET_NAME }} --delete
+
+      # # -------------------------
+      # # (Optional) CloudFront Cache Invalidation
+      # # -------------------------
+      # - name: Invalidate CloudFront
+      #   if: ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID != '' }}
+      #   run: |
+      #     aws cloudfront create-invalidation \
+      #       --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} \
+      #       --paths "/*"

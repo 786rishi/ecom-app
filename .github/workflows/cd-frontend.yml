@@ -28,7 +28,7 @@ jobs:
 
       - name: Build React app
         working-directory: frontend-react
-        run: npm run build
+        run: CI=false npm run build
 
       # -------------------------
       # AWS Login
@@ -38,7 +38,7 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          region: ap-south-1
+          region: us-east-1
 
       # -------------------------
       # Deploy to S3

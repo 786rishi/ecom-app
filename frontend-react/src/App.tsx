@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Container, Row, Col, Alert } from 'react-bootstrap';
+import { Container, Alert } from 'react-bootstrap';
 import AppHeader from './components/AppHeader';
 import ProductGrid from './components/ProductGrid';
 import ProductList from './components/ProductList';

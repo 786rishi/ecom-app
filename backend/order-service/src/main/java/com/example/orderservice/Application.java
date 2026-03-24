@@ -17,7 +17,7 @@ public class Application {
 
     @GetMapping("/hello")
     public String hello() {
-        return "Hello from updated" + appName;
+        return "Hello from updated  " + appName;
     }
 
 }

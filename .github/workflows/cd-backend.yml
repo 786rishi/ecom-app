@@ -71,8 +71,16 @@ jobs:
         run: |
           for SERVICE in ${{ needs.detect-changes.outputs.services }}
           do
-            echo "Deploying $SERVICE"
+            echo "Building $SERVICE"
 
+            cd backend
+
+            # Build only required service with dependencies
+            mvn clean package -pl $SERVICE -am -DskipTests
+
+            cd ..
+
+            echo "Docker build $SERVICE"
             docker build -t $SERVICE ./backend/$SERVICE
             docker tag $SERVICE:latest ${{ secrets.ECR_URI_BASE }}/$SERVICE:latest
             docker push ${{ secrets.ECR_URI_BASE }}/$SERVICE:latest

@@ -21,4 +21,4 @@ jobs:
 
       - name: Build all services
         working-directory: backend
-        run: mvn clean install -DskipTests=true
+        run: mvn clean package -DskipTests=true

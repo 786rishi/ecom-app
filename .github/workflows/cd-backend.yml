@@ -1,0 +1,77 @@
+name: CD Backend (Selective Deploy)
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'backend/**'
+
+jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      services: ${{ steps.set.outputs.services }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Detect changed services
+        id: set
+        run: |
+          SERVICES=""
+
+          if git diff --name-only HEAD~1 HEAD | grep -q "backend/order-service/"; then
+            SERVICES="$SERVICES order-service"
+          fi
+
+          if git diff --name-only HEAD~1 HEAD | grep -q "backend/product-catalog-service/"; then
+            SERVICES="$SERVICES product-catalog-service"
+          fi
+
+          if git diff --name-only HEAD~1 HEAD | grep -q "backend/inventory-service/"; then
+            SERVICES="$SERVICES inventory-service"
+          fi
+
+          if git diff --name-only HEAD~1 HEAD | grep -q "backend/gateway-service/"; then
+            SERVICES="$SERVICES gateway-service"
+          fi
+
+          if git diff --name-only HEAD~1 HEAD | grep -q "backend/content-service/"; then
+            SERVICES="$SERVICES content-service"
+          fi
+
+          echo "services=$SERVICES" >> $GITHUB_OUTPUT
+
+  deploy:
+    needs: detect-changes
+    runs-on: ubuntu-latest
+    if: needs.detect-changes.outputs.services != ''
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-south-1
+
+      - name: Login to ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Deploy changed services
+        run: |
+          for SERVICE in ${{ needs.detect-changes.outputs.services }}
+          do
+            echo "Deploying $SERVICE"
+
+            docker build -t $SERVICE ./backend/$SERVICE
+            docker tag $SERVICE:latest ${{ secrets.ECR_URI_BASE }}/$SERVICE:latest
+            docker push ${{ secrets.ECR_URI_BASE }}/$SERVICE:latest
+
+            aws ecs update-service \
+              --cluster mcart-cluster \
+              --service $SERVICE \
+              --force-new-deployment
+          done

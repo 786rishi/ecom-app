@@ -11,6 +11,7 @@ import LandingPage from './components/LandingPage';
 import AddProduct from './components/AddProduct';
 import InventoryManagement from './components/InventoryManagement';
 import Contact from './components/Contact';
+import Promotions from './components/Promotions';
 import { useProducts, setStateChangeCallback } from './hooks/useProducts';
 import { CartProvider } from './contexts/CartContext';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -18,7 +19,7 @@ import { GuestModeProvider, useGuestMode } from './contexts/GuestModeContext';
 import { Product } from './types/product';
 import './App.css';
 
-type AppState = 'main' | 'browse' | 'add-product' | 'inventory-management' | 'contact';
+type AppState = 'main' | 'browse' | 'add-product' | 'inventory-management' | 'contact' | 'promotions';
 
 // Track previous render to compare
 let lastRenderProducts: any = undefined;
@@ -120,9 +121,11 @@ function AppContent() {
         setAppState('add-product');
       } else if (hash === 'Inventory' && auth.isAuthenticated && auth.user?.roles?.includes('admin')) {
         setAppState('inventory-management');
+      } else if (hash === 'promotions' && auth.isAuthenticated && auth.user?.roles?.includes('admin')) {
+        setAppState('promotions');
       } else if (hash === 'contact') {
         setAppState('contact');
-      } else if (hash === 'product' || hash === 'Inventory') {
+      } else if (hash === 'product' || hash === 'Inventory' || hash === 'promotions') {
         // Redirect non-admin users to browse
         setAppState('browse');
         window.location.hash = '';
@@ -212,6 +215,27 @@ function AppContent() {
           onNavigateHome={handleNavigateHome}
         />
         <Contact />
+      </div>
+    );
+  }
+
+  // Show promotions page
+  if (appState === 'promotions') {
+    return (
+      <div className="App">
+        <ProfessionalNavBar
+          isGuestMode={isGuestMode}
+          onNavigateHome={handleNavigateHome}
+          setAppState={setAppState}
+        />
+        <AppHeader
+          viewMode={viewMode}
+          onViewModeChange={setViewMode}
+          isGuestMode={isGuestMode}
+          onLogin={handleLogin}
+          onNavigateHome={handleNavigateHome}
+        />
+        <Promotions />
       </div>
     );
   }

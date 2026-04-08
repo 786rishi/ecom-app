@@ -70,6 +70,14 @@ const ProfessionalNavBar: React.FC<ProfessionalNavBarProps> = ({
       action: () => {
         window.location.hash = 'Inventory';
       }
+    },
+    {
+      name: 'Promotions',
+      href: '#promotions',
+      icon: '🎁',
+      action: () => {
+        window.location.hash = 'promotions';
+      }
     }
   ];
 

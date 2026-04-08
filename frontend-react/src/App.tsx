@@ -10,6 +10,7 @@ import SearchResults from './components/SearchResults';
 import LandingPage from './components/LandingPage';
 import AddProduct from './components/AddProduct';
 import InventoryManagement from './components/InventoryManagement';
+import Contact from './components/Contact';
 import { useProducts, setStateChangeCallback } from './hooks/useProducts';
 import { CartProvider } from './contexts/CartContext';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -17,7 +18,7 @@ import { GuestModeProvider, useGuestMode } from './contexts/GuestModeContext';
 import { Product } from './types/product';
 import './App.css';
 
-type AppState = 'main' | 'browse' | 'add-product' | 'inventory-management';
+type AppState = 'main' | 'browse' | 'add-product' | 'inventory-management' | 'contact';
 
 // Track previous render to compare
 let lastRenderProducts: any = undefined;
@@ -119,6 +120,8 @@ function AppContent() {
         setAppState('add-product');
       } else if (hash === 'Inventory' && auth.isAuthenticated && auth.user?.roles?.includes('admin')) {
         setAppState('inventory-management');
+      } else if (hash === 'contact') {
+        setAppState('contact');
       } else if (hash === 'product' || hash === 'Inventory') {
         // Redirect non-admin users to browse
         setAppState('browse');
@@ -157,6 +160,7 @@ function AppContent() {
         <ProfessionalNavBar
           isGuestMode={isGuestMode}
           onNavigateHome={handleNavigateHome}
+          setAppState={setAppState}
         />
         <AppHeader
           viewMode={viewMode}
@@ -177,6 +181,7 @@ function AppContent() {
         <ProfessionalNavBar
           isGuestMode={isGuestMode}
           onNavigateHome={handleNavigateHome}
+          setAppState={setAppState}
         />
         <AppHeader
           viewMode={viewMode}
@@ -186,6 +191,27 @@ function AppContent() {
           onNavigateHome={handleNavigateHome}
         />
         <InventoryManagement />
+      </div>
+    );
+  }
+
+  // Show contact page
+  if (appState === 'contact') {
+    return (
+      <div className="App">
+        <ProfessionalNavBar
+          isGuestMode={isGuestMode}
+          onNavigateHome={handleNavigateHome}
+          setAppState={setAppState}
+        />
+        <AppHeader
+          viewMode={viewMode}
+          onViewModeChange={setViewMode}
+          isGuestMode={isGuestMode}
+          onLogin={handleLogin}
+          onNavigateHome={handleNavigateHome}
+        />
+        <Contact />
       </div>
     );
   }
@@ -200,6 +226,7 @@ function AppContent() {
         <ProfessionalNavBar
           isGuestMode={isGuestMode}
           onNavigateHome={handleNavigateHome}
+          setAppState={setAppState}
         />
         <AppHeader
           viewMode={viewMode}

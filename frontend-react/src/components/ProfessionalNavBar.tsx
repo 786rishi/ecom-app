@@ -6,11 +6,13 @@ import './ProfessionalNavBar.css';
 interface ProfessionalNavBarProps {
   onNavigateHome?: () => void;
   isGuestMode?: boolean;
+  setAppState?: (state: 'main' | 'browse' | 'add-product' | 'inventory-management') => void;
 }
 
 const ProfessionalNavBar: React.FC<ProfessionalNavBarProps> = ({
   onNavigateHome,
-  isGuestMode = false
+  isGuestMode = false,
+  setAppState
 }) => {
   const { auth, logout } = useAuth();
   
@@ -28,12 +30,13 @@ const ProfessionalNavBar: React.FC<ProfessionalNavBarProps> = ({
     {
       name: 'Home',
       href: '#home',
-      action: onNavigateHome,
+      action: () => setAppState?.('main'),
       icon: '🏠'
     },
     {
       name: 'Products',
       href: '#products',
+      action: () => setAppState?.('browse'),
       icon: '📦'
     },
     {
@@ -44,7 +47,10 @@ const ProfessionalNavBar: React.FC<ProfessionalNavBarProps> = ({
     {
       name: 'Contact',
       href: '#contact',
-      icon: '📞'
+      icon: '📞',
+      action: () => {
+        window.location.hash = 'contact';
+      }
     }
   ];
 

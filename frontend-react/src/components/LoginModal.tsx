@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Modal, Form, Button, Alert, Spinner } from 'react-bootstrap';
+import React from 'react';
+import { Modal, Button, Alert } from 'react-bootstrap';
 import { useAuth } from '../contexts/AuthContext';
 
 interface LoginModalProps {
@@ -8,44 +8,14 @@ interface LoginModalProps {
 }
 
 const LoginModal: React.FC<LoginModalProps> = ({ show, onHide }) => {
-  const { auth, login, clearError } = useAuth();
-  const [formData, setFormData] = useState({
-    email: '',
-    password: ''
-  });
+  const { auth, clearError } = useAuth();
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-    
-    // Clear error when user starts typing
-    if (auth.error) {
-      clearError();
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!formData.email || !formData.password) {
-      return;
-    }
-    
-    await login(formData.email, formData.password);
-    
-    if (!auth.error) {
-      // Login successful, close modal
-      onHide();
-      // Reset form
-      setFormData({ email: '', password: '' });
-    }
+  const handleLogin = () => {
+    window.open('http://localhost:8080/realms/master/protocol/openid-connect/auth?client_id=fb-login&redirect_uri=http%3A%2F%2Flocalhost%3A3000&state=f7d4b3fd-5ec0-4f51-ac5f-273aeeba1696&response_mode=query&response_type=code&scope=openid&nonce=81ad7d0a-b7ed-4705-8f73-ed4682143379&code_challenge=Z57CRwqdPDpdWKKqnyL8OxnqO0JGV1R3pTjB55qiKMQ&code_challenge_method=S256', '_self');
+    onHide(); // Close modal immediately since redirect will happen
   };
 
   const handleClose = () => {
-    setFormData({ email: '', password: '' });
     clearError();
     onHide();
   };
@@ -56,10 +26,12 @@ const LoginModal: React.FC<LoginModalProps> = ({ show, onHide }) => {
         <Modal.Title>Login to Your Account</Modal.Title>
       </Modal.Header>
       <Modal.Body>
-        <Alert variant="info" className="small">
-          <strong>Demo Credentials:</strong><br />
-          Email: test@gmail.com<br />
-          Password: admin
+        <Alert variant="info" className="text-center">
+          <Alert.Heading>Keycloak Authentication</Alert.Heading>
+          <p className="mb-3">
+            Click the button below to authenticate using Keycloak.
+            You will be redirected to the Keycloak login page.
+          </p>
         </Alert>
         
         {auth.error && (
@@ -68,50 +40,21 @@ const LoginModal: React.FC<LoginModalProps> = ({ show, onHide }) => {
           </Alert>
         )}
 
-        <Form onSubmit={handleSubmit}>
-          <Form.Group className="mb-3">
-            <Form.Label>Email Address</Form.Label>
-            <Form.Control
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleInputChange}
-              placeholder="Enter your email"
-              required
-              disabled={auth.loading}
-            />
-          </Form.Group>
-
-          <Form.Group className="mb-4">
-            <Form.Label>Password</Form.Label>
-            <Form.Control
-              type="password"
-              name="password"
-              value={formData.password}
-              onChange={handleInputChange}
-              placeholder="Enter your password"
-              required
-              disabled={auth.loading}
-            />
-          </Form.Group>
-
-          <div className="d-grid">
-            <Button 
-              variant="primary" 
-              type="submit" 
-              disabled={auth.loading}
-            >
-              {auth.loading ? (
-                <>
-                  <Spinner as="span" animation="border" size="sm" className="me-2" />
-                  Logging in...
-                </>
-              ) : (
-                'Login'
-              )}
-            </Button>
+        <div className="text-center">
+          <Button 
+            variant="primary" 
+            size="lg"
+            onClick={handleLogin}
+          >
+            Login with Keycloak
+          </Button>
+          
+          <div className="mt-3">
+            <small className="text-muted">
+              You will be redirected to a secure login page.
+            </small>
           </div>
-        </Form>
+        </div>
       </Modal.Body>
       <Modal.Footer>
         <Button variant="secondary" onClick={handleClose}>

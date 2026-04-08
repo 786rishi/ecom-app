@@ -37,6 +37,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
   };
 
   const handleCheckout = () => {
+    debugger
     if (cart.itemCount > 0) {
       setShowCheckout(true);
     }

@@ -108,52 +108,56 @@ const PaginationComponent: React.FC<PaginationProps> = ({
 
   return (
     <div className={`pagination-wrapper ${className}`}>
-      <div className="d-flex justify-content-between align-items-center flex-wrap">
-        <div className="pagination-info mb-2 mb-md-0">
-          <span className="text-muted">
-            Showing {startItem}-{endItem} of {total} products
-          </span>
+      <div className="row align-items-center">
+        <div className="col-md-auto col-12 mb-2 mb-md-0">
+          <div className="pagination-info">
+            <span className="text-muted">
+              Showing {startItem}-{endItem} of {total} products
+            </span>
+          </div>
         </div>
 
-        <div className="d-flex align-items-center">
-          {showPageSizeSelector && onPageSizeChange && (
-            <div className="page-size-selector me-3">
-              <Form.Select 
-                size="sm"
-                value={pageSize}
-                onChange={(e) => handlePageSizeChange(e.target.value)}
-                style={{ width: 'auto' }}
-              >
-                {pageSizeOptions.map(size => (
-                  <option key={size} value={size}>
-                    {size} per page
-                  </option>
-                ))}
-              </Form.Select>
-            </div>
-          )}
+        <div className="col-md col-12">
+          <div className="d-flex justify-content-md-end justify-content-center align-items-center flex-wrap">
+            {showPageSizeSelector && onPageSizeChange && (
+              <div className="page-size-selector me-md-3 me-2 mb-2 mb-md-0">
+                <Form.Select 
+                  size="sm"
+                  value={pageSize}
+                  onChange={(e) => handlePageSizeChange(e.target.value)}
+                  style={{ width: 'auto', minWidth: '120px' }}
+                >
+                  {pageSizeOptions.map(size => (
+                    <option key={size} value={size}>
+                      {size} per page
+                    </option>
+                  ))}
+                </Form.Select>
+              </div>
+            )}
 
-          <BootstrapPagination>
-            <BootstrapPagination.First 
-              onClick={() => handlePageChange(1)}
-              disabled={page === 1}
-            />
-            <BootstrapPagination.Prev 
-              onClick={() => handlePageChange(page - 1)}
-              disabled={page === 1}
-            />
-            
-            {getPaginationItems()}
-            
-            <BootstrapPagination.Next 
-              onClick={() => handlePageChange(page + 1)}
-              disabled={page === totalPages}
-            />
-            <BootstrapPagination.Last 
-              onClick={() => handlePageChange(totalPages)}
-              disabled={page === totalPages}
-            />
-          </BootstrapPagination>
+            <BootstrapPagination className="mb-0">
+              <BootstrapPagination.First 
+                onClick={() => handlePageChange(1)}
+                disabled={page === 1}
+              />
+              <BootstrapPagination.Prev 
+                onClick={() => handlePageChange(page - 1)}
+                disabled={page === 1}
+              />
+              
+              {getPaginationItems()}
+              
+              <BootstrapPagination.Next 
+                onClick={() => handlePageChange(page + 1)}
+                disabled={page === totalPages}
+              />
+              <BootstrapPagination.Last 
+                onClick={() => handlePageChange(totalPages)}
+                disabled={page === totalPages}
+              />
+            </BootstrapPagination>
+          </div>
         </div>
       </div>
     </div>

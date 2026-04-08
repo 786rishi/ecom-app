@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Silent Check SSO</title>
+    <script>
+        function silentCheckSsoCallback() {
+            var message = {
+                type: 'keycloak-silent-check-sso',
+                status: 'success'
+            };
+            parent.postMessage(message, '*');
+        }
+
+        function silentCheckSsoError() {
+            var message = {
+                type: 'keycloak-silent-check-sso',
+                status: 'error'
+            };
+            parent.postMessage(message, '*');
+        }
+
+        // Check if Keycloak is available and initialized
+        if (window.keycloak) {
+            silentCheckSsoCallback();
+        } else {
+            silentCheckSsoError();
+        }
+    </script>
+</head>
+<body>
+    Silent Check SSO
+</body>
+</html>

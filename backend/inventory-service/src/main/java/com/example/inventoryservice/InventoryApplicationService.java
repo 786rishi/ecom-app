@@ -9,9 +9,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 
 @SpringBootApplication
 @EnableFeignClients
-public class Application {
+public class InventoryService {
     public static void main(String[] args) {
-        SpringApplication.run(Application.class, args);
+        SpringApplication.run(InventoryService.class, args);
     }
 
     @Value("${spring.application.name}")

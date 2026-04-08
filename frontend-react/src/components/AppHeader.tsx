@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Container, Nav, Navbar, Button } from 'react-bootstrap';
+import { Container, Button } from 'react-bootstrap';
 import SearchInput from './SearchInput';
 import CheckoutModal from './CheckoutModal';
 import CartDropdown from './CartDropdown';
@@ -14,15 +14,18 @@ interface AppHeaderProps {
   onViewModeChange: (mode: 'grid' | 'list') => void;
   isGuestMode?: boolean;
   onLogin?: () => void;
+  onNavigateHome?: () => void;
 }
 
 const AppHeader: React.FC<AppHeaderProps> = ({
   viewMode,
   onViewModeChange,
   isGuestMode = false,
-  onLogin
+  onLogin,
+  onNavigateHome
 }) => {
   const { searchQuery, updateSearchQuery, clearFilters } = useProducts();
+
   const { cart } = useCart();
   const { auth, logout } = useAuth();
   const [showCheckout, setShowCheckout] = useState(false);
@@ -61,95 +64,60 @@ const AppHeader: React.FC<AppHeaderProps> = ({
 
   return (
     <>
-      <Navbar bg="light" expand="lg" className="shadow-sm mb-4">
-        <Container>
-          <Navbar.Brand href="/" className="fw-bold text-primary">
-            🛍️ E-Commerce Store
-          </Navbar.Brand>
-
-          <Navbar.Toggle aria-controls="basic-navbar-nav" />
-
-          <Navbar.Collapse id="basic-navbar-nav">
-            <Nav className="me-auto">
-              <Nav.Link href="#home">Home</Nav.Link>
-              <Nav.Link href="#products">Products</Nav.Link>
-              <Nav.Link href="#about">About</Nav.Link>
-              <Nav.Link href="#contact">Contact</Nav.Link>
-            </Nav>
-
-            <div className="d-flex align-items-center">
-              {/* Search Input */}
-              <div className="me-3" style={{ minWidth: '300px' }}>
-                <SearchInput
-                  value={searchQuery}
-                  onSearch={handleSearch}
-                  placeholder="Search products..."
-                  size="sm"
-                />
-              </div>
-
-              {/* Cart Dropdown - Hidden in guest mode */}
-              {!isGuestMode && (
-                <div className="me-3">
-                  <ProtectedComponent>
-                    <CartDropdown onCheckout={handleCheckout} />
-                  </ProtectedComponent>
-                </div>
-              )}
-
-              {/* Authentication */}
-              <div className="d-flex align-items-center">
-                {auth.isAuthenticated ? (
-                  <>
-                    <span className="me-3 text-muted">
-                      Welcome, {auth.user?.name}
-                    </span>
-                    <Button variant="outline-secondary" size="sm" onClick={handleLogout}>
-                      Logout
-                    </Button>
-                  </>
-                ) : (
-                  !isGuestMode && (
-                    <Button variant="primary" size="sm" onClick={onLogin || handleLogin}>
-                      Login
-                    </Button>
-                  )
-                )}
-              </div>
-
-              {/* View Mode Toggle */}
-              <div className="btn-group me-3" role="group">
-                <Button
-                  variant={viewMode === 'grid' ? 'primary' : 'outline-primary'}
-                  size="sm"
-                  onClick={() => onViewModeChange('grid')}
-                  title="Grid View"
-                >
-                  ⊞
-                </Button>
-                <Button
-                  variant={viewMode === 'list' ? 'primary' : 'outline-primary'}
-                  size="sm"
-                  onClick={() => onViewModeChange('list')}
-                  title="List View"
-                >
-                  ☰
-                </Button>
-              </div>
-
-              {/* Clear Filters */}
-              <Button
-                variant="outline-secondary"
+      <div className="app-header bg-light shadow-sm mb-4 py-3">
+        <Container className="d-flex justify-content-end align-items-center">
+          <div className="d-flex align-items-center gap-3">
+            {/* Search Input */}
+            <div style={{ minWidth: '300px' }}>
+              <SearchInput
+                value={searchQuery}
+                onSearch={handleSearch}
+                placeholder="Search products..."
                 size="sm"
-                onClick={handleClearAll}
-                title="Clear all filters"
+              />
+            </div>
+
+            {/* Cart Dropdown - Hidden in guest mode */}
+            {!isGuestMode && (
+              <div>
+                <ProtectedComponent>
+                  <CartDropdown onCheckout={handleCheckout} />
+                </ProtectedComponent>
+              </div>
+            )}
+
+            {/* View Mode Toggle */}
+            <div className="btn-group" role="group">
+              <Button
+                variant={viewMode === 'grid' ? 'primary' : 'outline-primary'}
+                size="sm"
+                onClick={() => onViewModeChange('grid')}
+                title="Grid View"
               >
-                Clear Filters
+                ⊞
+              </Button>
+              <Button
+                variant={viewMode === 'list' ? 'primary' : 'outline-primary'}
+                size="sm"
+                onClick={() => onViewModeChange('list')}
+                title="List View"
+              >
+                ☰
               </Button>
             </div>
-          </Navbar.Collapse>
+
+            {/* Clear Filters */}
+            <Button
+              variant="outline-secondary"
+              size="sm"
+              onClick={handleClearAll}
+              title="Clear all filters"
+            >
+              Clear Filters
+            </Button>
+          </div>
         </Container>
-      </Navbar>
+      </div>
 
       {/* Login Modal */}
       <LoginModal

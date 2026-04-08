@@ -49,7 +49,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ show, onHide }) => {
         handleClose();
       }, 3000);
     } catch (error) {
-      console.error('Checkout error:', error);
+
     } finally {
       setIsProcessing(false);
     }

@@ -9,6 +9,7 @@ interface User {
   preferredUsername?: string;
   givenName?: string;
   familyName?: string;
+  roles?: string[];
 }
 
 interface AuthState {
@@ -38,7 +39,7 @@ const initialState: AuthState = {
 };
 
 const authReducer = (state: AuthState, action: AuthAction): AuthState => {
-  console.log('AuthReducer: Action received:', action.type, 'payload' in action ? action.payload : 'no payload');
+
 
   switch (action.type) {
     case 'INIT_KEYCLOAK_START':
@@ -72,7 +73,7 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
       };
 
     case 'LOGIN_SUCCESS':
-      console.log('AuthReducer: LOGIN_SUCCESS action - setting isAuthenticated to true');
+
       return {
         ...state,
         user: (action as any).payload.user,
@@ -124,7 +125,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [auth, dispatch] = useReducer(authReducer, initialState);
 
-  console.log('AuthProvider: Initial auth state:', auth);
+
 
   // Initialize Keycloak
   useEffect(() => {
@@ -135,7 +136,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
 
 
-        console.log('AuthProvider: Starting Keycloak initialization...');
+
         dispatch({ type: 'INIT_KEYCLOAK_START' });
 
         // const authenticated = await keycloak.init({
@@ -155,10 +156,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
         (keycloak as any).__initialized = true;
 
-        console.log('AuthProvider: Keycloak init result:', { authenticated, hasToken: !!keycloak.token });
+
 
         if (authenticated && keycloak.token) {
-          console.log('AuthContext: User authenticated, setting up user profile');
+
 
           try {
             window.history.replaceState({}, document.title, window.location.pathname);
@@ -173,22 +174,23 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 : userProfile.username || '',
               preferredUsername: userProfile.username,
               givenName: userProfile.firstName,
-              familyName: userProfile.lastName
+              familyName: userProfile.lastName,
+              roles: keycloak.tokenParsed?.realm_access?.roles || []
             };
 
-            console.log('AuthContext: User profile created:', user);
+
 
             dispatch({
               type: 'LOGIN_SUCCESS',
               payload: { user, keycloak }
             });
 
-            console.log('AuthContext: Dispatched LOGIN_SUCCESS, new auth state should have isAuthenticated: true');
+
 
             // Trigger success event
             window.dispatchEvent(new CustomEvent('loginSuccess'));
           } catch (error) {
-            console.error('AuthContext: Error loading user profile:', error);
+
             dispatch({
               type: 'LOGIN_FAILURE',
               payload: 'Failed to load user profile'
@@ -220,33 +222,33 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             const refreshed = await keycloak.updateToken(30);
 
             if (refreshed) {
-              console.log("Token refreshed");
+
             } else {
-              console.log("Token still valid");
+
             }
           } catch (err) {
-            console.error("Refresh failed", err);
+
             dispatch({ type: "LOGOUT" });
           }
         };
 
         // Set up auth event listeners
         keycloak.onAuthSuccess = () => {
-          console.log('Auth successful');
+
         };
 
         keycloak.onAuthError = (error) => {
-          console.error('Auth error:', error);
+
           dispatch({ type: 'LOGIN_FAILURE', payload: 'Authentication failed' });
         };
 
         keycloak.onAuthLogout = () => {
-          console.log('Auth logout');
+
           dispatch({ type: 'LOGOUT' });
         };
 
       } catch (error) {
-        console.error('Keycloak initialization error:', error);
+
         dispatch({
           type: 'INIT_KEYCLOAK_FAILURE',
           payload: 'Failed to initialize authentication'
@@ -279,7 +281,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       });
 
     } catch (error) {
-      console.error('Login error:', error);
+
       dispatch({ type: 'LOGIN_FAILURE', payload: 'Login failed' });
     }
   };
@@ -295,7 +297,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           redirectUri: window.location.origin
         });
       } catch (error) {
-        console.error('Logout error:', error);
+
         // Force logout even if Keycloak logout fails
         dispatch({ type: 'LOGOUT' });
       }

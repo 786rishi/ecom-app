@@ -4,21 +4,34 @@ import { searchProducts } from '../utils/search';
 import { URLManager } from '../utils/url';
 import { productService, SearchParams } from '../services/productService';
 
+let hookCallCounter = 0;
+
 interface UseProductsOptions {
   autoLoad?: boolean;
   pageSize?: number;
+  onStateChange?: () => void; // Callback to notify component of state changes
 }
 
+// Global ref to store the notification callback
+const stateChangeCallbackRef = { current: null as (() => void) | null };
+
+export const setStateChangeCallback = (callback: () => void) => {
+  stateChangeCallbackRef.current = callback;
+};
+
 export const useProducts = (options: UseProductsOptions = {}) => {
+  hookCallCounter++;
   const { autoLoad = true, pageSize = 12 } = options;
   const isLoadingRef = useRef(false);
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const [allProducts, setAllProducts] = useState<Product[]>([]);
-  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
+  const [products, setFilteredProducts] = useState<Product[]>([]);
+  let filteredProducts_: Product[] = [];
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [stateVersion, setStateVersion] = useState(0); // Version number to force component re-renders
   const [isSearching, setIsSearching] = useState(false);
   const [isSearchMode, setIsSearchMode] = useState(false); // Track if we're in search mode
   const [filter, setFilter] = useState<ProductFilter>({
@@ -36,112 +49,54 @@ export const useProducts = (options: UseProductsOptions = {}) => {
     totalPages: 0
   });
 
-  // Debounced search function
-  // const debouncedSearch = useCallback((query: string) => {
-  //   // Clear previous timeout
-  //   if (searchTimeoutRef.current) {
-  //     clearTimeout(searchTimeoutRef.current);
-  //   }
-
-  //   // Set new timeout
-  //   searchTimeoutRef.current = setTimeout(async () => {
-  //     if (query.trim()) {
-  //       setIsSearching(true);
-  //       try {
-  //         // Use current state values directly instead of dependencies
-  //         const currentPage = pagination.page;
-  //         const currentPageSize = pagination.pageSize;
-
-  //         const response = await productService.searchProducts(query, currentPage - 1, currentPageSize);
-  //         console.log('Search API Response:', response);
-
-  //         setAllProducts(response.content);
-  //         setFilteredProducts(response.content);
-
-  //         // Update pagination with search response
-  //         setPagination(prev => {
-  //           const newPagination = {
-  //             page: response.number + 1,
-  //             pageSize: response.size,
-  //             total: response.totalElements,
-  //             totalPages: response.totalPages
-  //           };
-
-  //           // ✅ prevent re-render if no change
-  //           if (
-  //             prev.page === newPagination.page &&
-  //             prev.pageSize === newPagination.pageSize &&
-  //             prev.total === newPagination.total &&
-  //             prev.totalPages === newPagination.totalPages
-  //           ) {
-  //             return prev;
-  //           }
-
-  //           return newPagination;
-  //         });
-  //       } catch (err) {
-  //         setError('Failed to search products');
-  //         console.error('Error searching products:', err);
-  //       } finally {
-  //         setIsSearching(false);
-  //       }
-  //     } else {
-  //       // If query is empty, load all products
-  //       setSearchQuery('');
-
-  //       //loadProducts();
-  //     }
-  //   }, 300); // 300ms debounce time
-  // }, [pagination.page, pagination.pageSize]); // Remove all dependencies to prevent circular dependency
-
   const latestQueryRef = useRef('');
+  const searchQueryRef = useRef('');
 
   const paginationRef = useRef(pagination);
 
-useEffect(() => {
-  paginationRef.current = pagination;
-}, [pagination]);
+  useEffect(() => {
+    paginationRef.current = pagination;
+  }, [pagination]);
 
-useEffect(() => {
-  return () => {
-    if (searchTimeoutRef.current) {
-      clearTimeout(searchTimeoutRef.current);
-    }
-  };
-}, []);
+  useEffect(() => {
+    searchQueryRef.current = searchQuery;
+  }, [searchQuery]);
 
-const debouncedSearch = useCallback((query: string) => {
-  // Don't search if query is the same as before
-  if (latestQueryRef.current === query) {
-    return;
-  }
-  
-  latestQueryRef.current = query;
+  useEffect(() => {
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, []);
 
-  if (searchTimeoutRef.current) {
-    clearTimeout(searchTimeoutRef.current);
-  }
-
-  // Handle empty query - exit search mode and load all products
-  if (query.trim().length === 0) {
-    console.log('Search query is empty, exiting search mode');
-    setSearchQuery('');
-    setIsSearchMode(false); // Exit search mode
-    loadProducts(); // Load all products when search is empty
-    return;
-  }
-
-  // Enter search mode
-  setIsSearchMode(true);
-
-  searchTimeoutRef.current = setTimeout(async () => {
-    // Double check query is still valid and hasn't changed
-    if (!query.trim() || latestQueryRef.current !== query) {
+  const debouncedSearch = useCallback(async (query: string) => {
+    // Don't search if query is the same as before
+    if (latestQueryRef.current === query) {
       return;
     }
 
-    console.log('Starting search for:', query);
+    latestQueryRef.current = query;
+
+    // Clear any pending timeout
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+
+    // Handle empty query - exit search mode and load all products
+    if (query.trim().length === 0) {
+      setSearchQuery('');
+      setIsSearchMode(false);
+      loadProducts();
+      return;
+    }
+
+    // Enter search mode and search immediately (no debounce delay)
+    setIsSearchMode(true);
     setIsSearching(true);
+    setAllProducts([]);
+    setFilteredProducts([]);
+    filteredProducts_ = [];
 
     try {
       const { page, pageSize } = paginationRef.current;
@@ -152,35 +107,31 @@ const debouncedSearch = useCallback((query: string) => {
         pageSize
       );
 
+      console.log("response fomr debounced serach:", response)
       // Prevent stale response overwrite
       if (latestQueryRef.current !== query) {
-        console.log('Stale response detected, ignoring');
         return;
       }
 
-      console.log('Search completed for:', query);
-      console.log('Search results:', response);
-       
-      // Only show search results, not mix with old products
-      setAllProducts(response);
-      setFilteredProducts(response);
+      // Update search results
+      if (response && response.content && Array.isArray(response.content)) {
+        setAllProducts([...response.content]);
+        setFilteredProducts([...response.content]);
+        filteredProducts_ = [...response.content];
+      }
 
-      // For search results, we need to handle pagination differently
-      // Since the API returns Product[] directly, we'll maintain current pagination
-      // but update the total based on the response length
+      // Update pagination with API response
       setPagination(prev => {
         const updatedPagination = {
-          ...prev,
-          total: response.length, // Update total with actual result count
-          totalPages: Math.ceil(response.length / prev.pageSize) // Calculate total pages
+          page: response.number + 1,
+          pageSize: response.size,
+          total: response.totalElements,
+          totalPages: response.totalPages
         };
-        
-        console.log('Updated pagination for search:', updatedPagination);
         return updatedPagination;
       });
 
     } catch (err) {
-      console.error('Search error:', err);
       if (latestQueryRef.current === query) {
         setError('Failed to search products');
       }
@@ -189,17 +140,10 @@ const debouncedSearch = useCallback((query: string) => {
         setIsSearching(false);
       }
     }
-  }, 300);
-}, []); // No dependencies
+  }, []); // No dependencies
 
   // Load products
   const loadProducts = useCallback(async () => {
-    // Don't load all products if we're in search mode
-    if (isSearchMode) {
-      console.log('Skipping loadProducts - in search mode');
-      return;
-    }
-
     if (isLoadingRef.current) return; // Prevent duplicate calls
     isLoadingRef.current = true;
 
@@ -208,101 +152,124 @@ const debouncedSearch = useCallback((query: string) => {
 
     try {
       // Use current state values instead of dependencies
-      const currentPage = pagination.page;
-      const currentPageSize = pagination.pageSize;
-      const currentSearchQuery = searchQuery;
+      const currentPage = paginationRef.current.page;
+      const currentPageSize = paginationRef.current.pageSize;
+      const currentSearchQuery = searchQuery //searchQueryRef.current;
       const currentCategories = filter.categories;
       const currentSortField = sort.field;
       const currentSortDirection = sort.direction;
 
-      const params: SearchParams = {
-        page: currentPage - 1, // API uses 0-based indexing
-        size: currentPageSize,
-        search: currentSearchQuery || undefined,
-        category: currentCategories.length > 0 ? currentCategories[0] : undefined,
-        sortBy: currentSortField,
-        sortOrder: currentSortDirection
-      };
+      // Check if we have a search query
 
-      // Only log once to avoid spam
-      if (!(window as any).debugLogged) {
-        console.log('API Parameters being sent:', params);
-        console.log('Current state:', {
-          pagination,
-          searchQuery,
-          filter,
-          sort
-        });
-        (window as any).debugLogged = true;
-      }
+      if (currentSearchQuery && currentSearchQuery.trim()) {
+        return;
+        setAllProducts([]);
+        setFilteredProducts([]);
+        console.log("setFilteredProducts: []");
+        filteredProducts_ = [];
 
-      const response = await productService.getProducts(params);
 
-      console.log('API Response:', response);
-      console.log('Products from API:', response.content);
+        const searchResponse = await productService.searchProducts(
+          currentSearchQuery,
+          currentPage - 1,
+          currentPageSize
+        );
 
-      setAllProducts(response.content);
-      setFilteredProducts(response.content);
+        // Explicitly set the search results
+        if (searchResponse && searchResponse.content && Array.isArray(searchResponse.content)) {
 
-      // Update pagination with API response
-      setPagination(prev => {
-        const newPagination = {
-          page: response.number + 1,
-          pageSize: response.size,
-          total: response.totalElements,
-          totalPages: response.totalPages
-        };
+          setAllProducts(searchResponse.content);
+          setFilteredProducts(searchResponse.content);
+          console.log("setFilteredProducts:", searchResponse.content);
 
-        // ✅ prevent re-render if no change
-        if (
-          prev.page === newPagination.page &&
-          prev.pageSize === newPagination.pageSize &&
-          prev.total === newPagination.total &&
-          prev.totalPages === newPagination.totalPages
-        ) {
-          return prev;
+          filteredProducts_ = [...searchResponse.content];
+
+        } else {
+
         }
 
-        return newPagination;
-      });
+        // Update pagination for search results
+        setPagination(prev => {
+          const updatedPagination = {
+            page: searchResponse.number + 1,
+            pageSize: searchResponse.size,
+            total: searchResponse.totalElements,
+            totalPages: searchResponse.totalPages
+          };
+
+
+          return updatedPagination;
+        });
+      } else {
+        // Use general products API for non-search queries
+        const params: SearchParams = {
+          page: currentPage - 1, // API uses 0-based indexing
+          size: currentPageSize,
+          category: currentCategories.length > 0 ? currentCategories[0] : undefined,
+          sortBy: currentSortField,
+          sortOrder: currentSortDirection
+        };
+
+
+        const response = await productService.getProducts(params);
+
+
+
+
+        setAllProducts(response.content);
+        setFilteredProducts(response.content);
+        filteredProducts_ = [...response.content];
+
+        // Update pagination with API response
+        setPagination(prev => {
+          const newPagination = {
+            page: response.number + 1,
+            pageSize: response.size,
+            total: response.totalElements,
+            totalPages: response.totalPages
+          };
+
+          // ✅ prevent re-render if no change
+          if (
+            prev.page === newPagination.page &&
+            prev.pageSize === newPagination.pageSize &&
+            prev.total === newPagination.total &&
+            prev.totalPages === newPagination.totalPages
+          ) {
+            return prev;
+          }
+
+          return newPagination;
+        });
+      }
 
     } catch (err) {
       setError('Failed to load products');
-      console.error('Error loading products:', err);
+
     } finally {
       setLoading(false);
       isLoadingRef.current = false;
     }
   }, []); // Remove all dependencies to prevent circular dependency
 
-  // Update search query
-  // const updateSearchQuery = useCallback((query: string) => {
-  //   setSearchQuery(prev => (prev === query ? prev : query));
-  //   setPagination(prev => (prev.page === 1 ? prev : { ...prev, page: 1 }));
-
-  //   //URLManager.updateSearchParams({ query, page: 1 });
-
-  //   // Use debounced search
-  //   debouncedSearch(query);
-  // }, [debouncedSearch]);
 
   const updateSearchQuery = useCallback((query: string) => {
-  console.log('updateSearchQuery called with:', query);
-  
-  // Update search query state
-  setSearchQuery(prev => (prev === query ? prev : query));
 
-  // Reset pagination to page 1 when searching
-  setPagination(prev =>
-    prev.page === 1 ? prev : { ...prev, page: 1 }
-  );
+    console.log("updateSearchQuery:", query)
+    // Update search query state
+    setSearchQuery(prev => (prev === query ? prev : query));
 
-  // Update URL params
-  URLManager.updateSearchParams({ query, page: 1 });
+    // Reset pagination to page 1 when searching
+    setPagination(prev =>
+      prev.page === 1 ? prev : { ...prev, page: 1 }
+    );
 
-  // Trigger debounced search
-  debouncedSearch(query);
-}, []); // Remove debouncedSearch dependency
+    // Update URL params
+    URLManager.updateSearchParams({ query, page: 1 });
+
+    // Trigger debounced search
+    debouncedSearch(query);
+  }, []); // Remove debouncedSearch dependency
 
   // Update filter
   const updateFilter = useCallback((newFilter: Partial<ProductFilter>) => {
@@ -334,17 +301,35 @@ const debouncedSearch = useCallback((query: string) => {
   }, [sort]);
 
   // Update page
+  // const updatePage = useCallback((page: number) => {
+  //   setPagination(prev => ({ ...prev, page }));
+  //   URLManager.updateSearchParams({ page });
+  // }, []);
+
   const updatePage = useCallback((page: number) => {
-    setPagination(prev => ({ ...prev, page }));
+    setPagination(prev => {
+      if (prev.page === page) return prev; // ✅ prevent loop
+      return { ...prev, page };
+    });
+
     URLManager.updateSearchParams({ page });
   }, []);
 
   // Update page size
+  // const updatePageSize = useCallback((pageSize: number) => {
+  //   setPagination(prev => ({ ...prev, pageSize, page: 1 }));
+  //   URLManager.updateSearchParams({ pageSize, page: 1 });
+  // }, []);
+
+
   const updatePageSize = useCallback((pageSize: number) => {
-    setPagination(prev => ({ ...prev, pageSize, page: 1 }));
+    setPagination(prev => {
+      if (prev.pageSize === pageSize && prev.page === 1) return prev;
+      return { ...prev, pageSize, page: 1 };
+    });
+
     URLManager.updateSearchParams({ pageSize, page: 1 });
   }, []);
-
   // Clear all filters
   const clearFilters = useCallback(() => {
     setFilter({
@@ -404,7 +389,7 @@ const debouncedSearch = useCallback((query: string) => {
     const prevParams = prevParamsRef.current;
 
     // Check if any parameter actually changed (excluding search)
-    const paramsChanged = 
+    const paramsChanged =
       currentParams.page !== prevParams.page ||
       currentParams.pageSize !== prevParams.pageSize ||
       JSON.stringify(currentParams.categories) !== JSON.stringify(prevParams.categories) ||
@@ -413,22 +398,32 @@ const debouncedSearch = useCallback((query: string) => {
 
     if (paramsChanged && autoLoad && !isLoadingRef.current) {
       prevParamsRef.current = currentParams;
-      
-      console.log('Parameters changed, loading products:', currentParams);
-      
-      // If we're in search mode, trigger search with new parameters
-      if (isSearchMode && searchQuery.trim()) {
-        console.log('In search mode, triggering search with new parameters');
-        debouncedSearch(searchQuery);
-      } else {
-        console.log('In normal mode, loading all products');
-        loadProducts();
-      }
+
+
+
+      // Always use loadProducts for parameter changes (pagination, filters, sort)
+      // loadProducts handles both search and regular product loading
+      loadProducts();
     }
-  }, [pagination.page, pagination.pageSize, filter.categories, sort.field, sort.direction, autoLoad, isSearchMode, searchQuery]);
+  }, [pagination.page, pagination.pageSize, filter.categories, sort.field, sort.direction, autoLoad]);
+
+  // CRITICAL: Whenever products or search state changes, notify component to re-render
+  useEffect(() => {
+
+    // Call the callback to notify component it should re-render
+    if (stateChangeCallbackRef.current) {
+
+      stateChangeCallbackRef.current();
+    }
+    setStateVersion(prev => {
+      const newVersion = prev + 1;
+
+      return newVersion;
+    });
+  }, [products.length, searchQuery, loading, isSearching]);
 
   const result = {
-    products: filteredProducts,
+    products,
     allProducts: allProducts,
     loading: loading || isSearching,
     error,
@@ -444,8 +439,10 @@ const debouncedSearch = useCallback((query: string) => {
     updatePage,
     updatePageSize,
     clearFilters,
-    refetch: loadProducts
+    refetch: loadProducts,
+    stateVersion // Include version number so component knows when to re-render
   };
+
 
   return result;
 };

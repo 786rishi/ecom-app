@@ -169,7 +169,7 @@ export const getSearchSuggestions = (
     }
     
     // Add brand suggestions
-    if (product.brand.toLowerCase().includes(queryLower)) {
+    if (product.brand?.toLowerCase().includes(queryLower)) {
       suggestions.add(product.brand);
     }
     

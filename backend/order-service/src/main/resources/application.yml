@@ -5,6 +5,24 @@ spring:
   application:
     name: order-service
 
+  datasource:
+    cart:
+      url: jdbc:mysql://localhost:3307/cartdb
+      username: admin
+      password: admin
+      driver-class-name: com.mysql.cj.jdbc.Driver
+
+    order:
+      url: jdbc:mysql://localhost:3307/orderdb
+      username: admin
+      password: admin
+      driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+
 management:
   endpoints:
     web:

@@ -34,6 +34,7 @@ const ProductGrid: React.FC<ProductGridProps> = ({
   },
   className = ''
 }) => {
+  console.log("ProductGrid rendering with products:", products);
   if (loading) {
     return (
       <div className={`product-grid-loading ${className}`}>

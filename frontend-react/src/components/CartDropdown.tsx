@@ -10,7 +10,6 @@ interface CartDropdownProps {
 const CartDropdown: React.FC<CartDropdownProps> = ({ onCheckout }) => {
   const { cart, removeFromCart, updateQuantity, clearCart } = useCart();
 
-  debugger
   const handleRemoveItem = (productId: string) => {
     removeFromCart(productId);
   };
@@ -19,7 +18,6 @@ const CartDropdown: React.FC<CartDropdownProps> = ({ onCheckout }) => {
     updateQuantity(productId, newQuantity);
   };
 
-  debugger
 
   if (cart.items.length === 0) {
     return (

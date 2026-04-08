@@ -17,6 +17,9 @@ const ProductCard: React.FC<ProductCardProps> = ({
   showAddToCart = false,
   className = ''
 }) => {
+
+    console.log("ProductCard rendering with product:", product);
+
   const { addToCart } = useCart();
   const [showToast, setShowToast] = React.useState(false);
 

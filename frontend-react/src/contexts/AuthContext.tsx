@@ -72,7 +72,6 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
       };
     
     case 'LOGIN_SUCCESS':
-      debugger
       console.log('AuthReducer: LOGIN_SUCCESS action - setting isAuthenticated to true');
       return {
         ...state,

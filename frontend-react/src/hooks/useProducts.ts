@@ -1,8 +1,8 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Product, ProductFilter, ProductSort, PaginationInfo } from '../types/product';
 import { searchProducts } from '../utils/search';
 import { URLManager } from '../utils/url';
-import { mockProducts } from '../services/mockDataService';
+import { productService, SearchParams } from '../services/productService';
 
 interface UseProductsOptions {
   autoLoad?: boolean;
@@ -11,12 +11,16 @@ interface UseProductsOptions {
 
 export const useProducts = (options: UseProductsOptions = {}) => {
   const { autoLoad = true, pageSize = 12 } = options;
+  const isLoadingRef = useRef(false);
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [isSearching, setIsSearching] = useState(false);
+  const [isSearchMode, setIsSearchMode] = useState(false); // Track if we're in search mode
   const [filter, setFilter] = useState<ProductFilter>({
     categories: [],
     priceRange: { min: 0, max: Infinity },
@@ -32,104 +36,273 @@ export const useProducts = (options: UseProductsOptions = {}) => {
     totalPages: 0
   });
 
+  // Debounced search function
+  // const debouncedSearch = useCallback((query: string) => {
+  //   // Clear previous timeout
+  //   if (searchTimeoutRef.current) {
+  //     clearTimeout(searchTimeoutRef.current);
+  //   }
+
+  //   // Set new timeout
+  //   searchTimeoutRef.current = setTimeout(async () => {
+  //     if (query.trim()) {
+  //       setIsSearching(true);
+  //       try {
+  //         // Use current state values directly instead of dependencies
+  //         const currentPage = pagination.page;
+  //         const currentPageSize = pagination.pageSize;
+
+  //         const response = await productService.searchProducts(query, currentPage - 1, currentPageSize);
+  //         console.log('Search API Response:', response);
+
+  //         setAllProducts(response.content);
+  //         setFilteredProducts(response.content);
+
+  //         // Update pagination with search response
+  //         setPagination(prev => {
+  //           const newPagination = {
+  //             page: response.number + 1,
+  //             pageSize: response.size,
+  //             total: response.totalElements,
+  //             totalPages: response.totalPages
+  //           };
+
+  //           // ✅ prevent re-render if no change
+  //           if (
+  //             prev.page === newPagination.page &&
+  //             prev.pageSize === newPagination.pageSize &&
+  //             prev.total === newPagination.total &&
+  //             prev.totalPages === newPagination.totalPages
+  //           ) {
+  //             return prev;
+  //           }
+
+  //           return newPagination;
+  //         });
+  //       } catch (err) {
+  //         setError('Failed to search products');
+  //         console.error('Error searching products:', err);
+  //       } finally {
+  //         setIsSearching(false);
+  //       }
+  //     } else {
+  //       // If query is empty, load all products
+  //       setSearchQuery('');
+
+  //       //loadProducts();
+  //     }
+  //   }, 300); // 300ms debounce time
+  // }, [pagination.page, pagination.pageSize]); // Remove all dependencies to prevent circular dependency
+
+  const latestQueryRef = useRef('');
+
+  const paginationRef = useRef(pagination);
+
+useEffect(() => {
+  paginationRef.current = pagination;
+}, [pagination]);
+
+useEffect(() => {
+  return () => {
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+  };
+}, []);
+
+const debouncedSearch = useCallback((query: string) => {
+  // Don't search if query is the same as before
+  if (latestQueryRef.current === query) {
+    return;
+  }
+  
+  latestQueryRef.current = query;
+
+  if (searchTimeoutRef.current) {
+    clearTimeout(searchTimeoutRef.current);
+  }
+
+  // Handle empty query - exit search mode and load all products
+  if (query.trim().length === 0) {
+    console.log('Search query is empty, exiting search mode');
+    setSearchQuery('');
+    setIsSearchMode(false); // Exit search mode
+    loadProducts(); // Load all products when search is empty
+    return;
+  }
+
+  // Enter search mode
+  setIsSearchMode(true);
+
+  searchTimeoutRef.current = setTimeout(async () => {
+    // Double check query is still valid and hasn't changed
+    if (!query.trim() || latestQueryRef.current !== query) {
+      return;
+    }
+
+    console.log('Starting search for:', query);
+    setIsSearching(true);
+
+    try {
+      const { page, pageSize } = paginationRef.current;
+
+      const response = await productService.searchProducts(
+        query,
+        page - 1,
+        pageSize
+      );
+
+      // Prevent stale response overwrite
+      if (latestQueryRef.current !== query) {
+        console.log('Stale response detected, ignoring');
+        return;
+      }
+
+      console.log('Search completed for:', query);
+      console.log('Search results:', response);
+       
+      // Only show search results, not mix with old products
+      setAllProducts(response);
+      setFilteredProducts(response);
+
+      // For search results, we need to handle pagination differently
+      // Since the API returns Product[] directly, we'll maintain current pagination
+      // but update the total based on the response length
+      setPagination(prev => {
+        const updatedPagination = {
+          ...prev,
+          total: response.length, // Update total with actual result count
+          totalPages: Math.ceil(response.length / prev.pageSize) // Calculate total pages
+        };
+        
+        console.log('Updated pagination for search:', updatedPagination);
+        return updatedPagination;
+      });
+
+    } catch (err) {
+      console.error('Search error:', err);
+      if (latestQueryRef.current === query) {
+        setError('Failed to search products');
+      }
+    } finally {
+      if (latestQueryRef.current === query) {
+        setIsSearching(false);
+      }
+    }
+  }, 300);
+}, []); // No dependencies
+
   // Load products
   const loadProducts = useCallback(async () => {
+    // Don't load all products if we're in search mode
+    if (isSearchMode) {
+      console.log('Skipping loadProducts - in search mode');
+      return;
+    }
+
+    if (isLoadingRef.current) return; // Prevent duplicate calls
+    isLoadingRef.current = true;
+
     setLoading(true);
     setError(null);
 
     try {
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Use current state values instead of dependencies
+      const currentPage = pagination.page;
+      const currentPageSize = pagination.pageSize;
+      const currentSearchQuery = searchQuery;
+      const currentCategories = filter.categories;
+      const currentSortField = sort.field;
+      const currentSortDirection = sort.direction;
 
-      setAllProducts(mockProducts);
+      const params: SearchParams = {
+        page: currentPage - 1, // API uses 0-based indexing
+        size: currentPageSize,
+        search: currentSearchQuery || undefined,
+        category: currentCategories.length > 0 ? currentCategories[0] : undefined,
+        sortBy: currentSortField,
+        sortOrder: currentSortDirection
+      };
+
+      // Only log once to avoid spam
+      if (!(window as any).debugLogged) {
+        console.log('API Parameters being sent:', params);
+        console.log('Current state:', {
+          pagination,
+          searchQuery,
+          filter,
+          sort
+        });
+        (window as any).debugLogged = true;
+      }
+
+      const response = await productService.getProducts(params);
+
+      console.log('API Response:', response);
+      console.log('Products from API:', response.content);
+
+      setAllProducts(response.content);
+      setFilteredProducts(response.content);
+
+      // Update pagination with API response
+      setPagination(prev => {
+        const newPagination = {
+          page: response.number + 1,
+          pageSize: response.size,
+          total: response.totalElements,
+          totalPages: response.totalPages
+        };
+
+        // ✅ prevent re-render if no change
+        if (
+          prev.page === newPagination.page &&
+          prev.pageSize === newPagination.pageSize &&
+          prev.total === newPagination.total &&
+          prev.totalPages === newPagination.totalPages
+        ) {
+          return prev;
+        }
+
+        return newPagination;
+      });
+
     } catch (err) {
       setError('Failed to load products');
       console.error('Error loading products:', err);
     } finally {
       setLoading(false);
+      isLoadingRef.current = false;
     }
-  }, []);
-
-  // Apply filters, search, and sorting
-  const applyFiltersAndSearch = useCallback(() => {
-    let result = [...allProducts];
-
-    const baseUrl = process.env.REACT_APP_API_BASE_URL;
-
-    fetch(`${baseUrl}/products/actuator/health`, {
-      method: "GET"
-    })
-      .then(response => response.json())
-      .then(data => console.log("response:", data))
-      .catch(err => console.error("error:", err));
-
-    // Apply search
-    if (searchQuery) {
-      result = searchProducts(result, searchQuery);
-    }
-
-    // Apply filters
-    if (filter.categories.length > 0) {
-      result = result.filter(product =>
-        filter.categories.includes(product.category)
-      );
-    }
-
-    if (filter.brands.length > 0) {
-      result = result.filter(product =>
-        filter.brands.includes(product.brand)
-      );
-    }
-
-    if (filter.priceRange.min > 0) {
-      result = result.filter(product => product.price >= filter.priceRange.min);
-    }
-
-    if (filter.priceRange.max < Infinity) {
-      result = result.filter(product => product.price <= filter.priceRange.max);
-    }
-
-    if (filter.inStockOnly) {
-      result = result.filter(product => product.inStock);
-    }
-
-    // Apply sorting
-    result.sort((a, b) => {
-      let aValue: any = a[sort.field];
-      let bValue: any = b[sort.field];
-
-      if (typeof aValue === 'string') {
-        aValue = aValue.toLowerCase();
-        bValue = bValue.toLowerCase();
-      }
-
-      if (sort.direction === 'asc') {
-        return aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
-      } else {
-        return aValue < bValue ? 1 : aValue > bValue ? -1 : 0;
-      }
-    });
-
-    // Calculate pagination
-    const total = result.length;
-    const totalPages = Math.ceil(total / pagination.pageSize);
-    const startIndex = (pagination.page - 1) * pagination.pageSize;
-    const endIndex = startIndex + pagination.pageSize;
-    const paginatedResults = result.slice(startIndex, endIndex);
-
-    setFilteredProducts(paginatedResults);
-    setPagination(prev => ({
-      ...prev,
-      total,
-      totalPages
-    }));
-  }, [allProducts, searchQuery, filter, sort, pagination.page, pagination.pageSize]);
+  }, []); // Remove all dependencies to prevent circular dependency
 
   // Update search query
+  // const updateSearchQuery = useCallback((query: string) => {
+  //   setSearchQuery(prev => (prev === query ? prev : query));
+  //   setPagination(prev => (prev.page === 1 ? prev : { ...prev, page: 1 }));
+
+  //   //URLManager.updateSearchParams({ query, page: 1 });
+
+  //   // Use debounced search
+  //   debouncedSearch(query);
+  // }, [debouncedSearch]);
+
   const updateSearchQuery = useCallback((query: string) => {
-    setSearchQuery(query);
-    URLManager.updateSearchParams({ query, page: 1 });
-  }, []);
+  console.log('updateSearchQuery called with:', query);
+  
+  // Update search query state
+  setSearchQuery(prev => (prev === query ? prev : query));
+
+  // Reset pagination to page 1 when searching
+  setPagination(prev =>
+    prev.page === 1 ? prev : { ...prev, page: 1 }
+  );
+
+  // Update URL params
+  URLManager.updateSearchParams({ query, page: 1 });
+
+  // Trigger debounced search
+  debouncedSearch(query);
+}, []); // Remove debouncedSearch dependency
 
   // Update filter
   const updateFilter = useCallback((newFilter: Partial<ProductFilter>) => {
@@ -187,7 +360,7 @@ export const useProducts = (options: UseProductsOptions = {}) => {
     URLManager.clearAllParams();
   }, []);
 
-  // Initialize from URL
+  // Initialize from URL and load products on mount
   useEffect(() => {
     const urlParams = URLManager.getSearchParams();
 
@@ -202,32 +375,69 @@ export const useProducts = (options: UseProductsOptions = {}) => {
     if (urlParams.sortBy || urlParams.sortOrder) {
       setSort(URLManager.paramsToSort(urlParams));
     }
-  }, []);
 
-  // Load products on mount
-  useEffect(() => {
+    // Load products on mount with URL params
     if (autoLoad) {
       loadProducts();
     }
-  }, [autoLoad, loadProducts]);
+  }, [autoLoad]); // Only run on mount
 
-  // Apply filters when dependencies change
+  // Ref to track previous parameters for non-search changes
+  const prevParamsRef = useRef({
+    page: 1,
+    pageSize: 12,
+    categories: [] as string[],
+    sortField: 'name',
+    sortDirection: 'asc'
+  });
+
+  // Separate useEffect for non-search parameter changes (filters, sort, pagination)
   useEffect(() => {
-    //if (allProducts.length > 0) 
-    {
-      applyFiltersAndSearch();
-    }
-  }, [applyFiltersAndSearch]);
+    const currentParams = {
+      page: pagination.page,
+      pageSize: pagination.pageSize,
+      categories: filter.categories,
+      sortField: sort.field,
+      sortDirection: sort.direction
+    };
 
-  return {
+    const prevParams = prevParamsRef.current;
+
+    // Check if any parameter actually changed (excluding search)
+    const paramsChanged = 
+      currentParams.page !== prevParams.page ||
+      currentParams.pageSize !== prevParams.pageSize ||
+      JSON.stringify(currentParams.categories) !== JSON.stringify(prevParams.categories) ||
+      currentParams.sortField !== prevParams.sortField ||
+      currentParams.sortDirection !== prevParams.sortDirection;
+
+    if (paramsChanged && autoLoad && !isLoadingRef.current) {
+      prevParamsRef.current = currentParams;
+      
+      console.log('Parameters changed, loading products:', currentParams);
+      
+      // If we're in search mode, trigger search with new parameters
+      if (isSearchMode && searchQuery.trim()) {
+        console.log('In search mode, triggering search with new parameters');
+        debouncedSearch(searchQuery);
+      } else {
+        console.log('In normal mode, loading all products');
+        loadProducts();
+      }
+    }
+  }, [pagination.page, pagination.pageSize, filter.categories, sort.field, sort.direction, autoLoad, isSearchMode, searchQuery]);
+
+  const result = {
     products: filteredProducts,
     allProducts: allProducts,
-    loading,
+    loading: loading || isSearching,
     error,
     searchQuery,
     filter,
     sort,
     pagination,
+    isSearching,
+    isSearchMode,
     updateSearchQuery,
     updateFilter,
     updateSort,
@@ -236,4 +446,6 @@ export const useProducts = (options: UseProductsOptions = {}) => {
     clearFilters,
     refetch: loadProducts
   };
+
+  return result;
 };

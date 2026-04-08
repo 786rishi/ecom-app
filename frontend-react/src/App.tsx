@@ -3,7 +3,7 @@ import { Container, Alert } from 'react-bootstrap';
 import AppHeader from './components/AppHeader';
 import ProductGrid from './components/ProductGrid';
 import ProductList from './components/ProductList';
-import Pagination from './components/Pagination';
+import PaginationComponent from './components/Pagination';
 import LoadingSpinner from './components/LoadingSpinner';
 import SearchResults from './components/SearchResults';
 import LandingPage from './components/LandingPage';
@@ -143,7 +143,7 @@ function AppContent() {
                 <ProductGrid
                   products={products}
                   onProductClick={handleProductClick}
-                  showAddToCart={true}
+                  showAddToCart={auth.isAuthenticated}
                   loading={loading}
                   className="mb-4"
                 />
@@ -151,7 +151,7 @@ function AppContent() {
                 <ProductList
                   products={products}
                   onProductClick={handleProductClick}
-                  showAddToCart={true}
+                  showAddToCart={auth.isAuthenticated}
                   loading={loading}
                   className="mb-4"
                 />
@@ -159,7 +159,7 @@ function AppContent() {
 
               {/* Pagination */}
               {products.length > 0 && (
-                <Pagination
+                <PaginationComponent
                   pagination={pagination}
                   onPageChange={updatePage}
                   onPageSizeChange={updatePageSize}

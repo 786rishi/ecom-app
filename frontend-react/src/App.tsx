@@ -17,6 +17,7 @@ import { CartProvider } from './contexts/CartContext';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { GuestModeProvider, useGuestMode } from './contexts/GuestModeContext';
 import { Product } from './types/product';
+import { productService } from './services/productService';
 import './App.css';
 
 type AppState = 'main' | 'browse' | 'add-product' | 'inventory-management' | 'contact' | 'promotions';
@@ -100,6 +101,21 @@ function AppContent() {
     setAppState('main');
   };
 
+  const handleCategorySelect = async (category: string) => {
+    try {
+      // Make sure we're in browse state
+      if (appState !== 'browse') {
+        setAppState('browse');
+      }
+      
+      // Use the hook's updateSearchQuery function which handles the API call
+      const { updateSearchQuery } = hookReturn;
+      updateSearchQuery(category);
+    } catch (error) {
+      console.error('Error fetching category products:', error);
+    }
+  };
+
   // Listen for login success event
   React.useEffect(() => {
     const handleLoginSuccess = () => {
@@ -171,6 +187,7 @@ function AppContent() {
           isGuestMode={isGuestMode}
           onLogin={handleLogin}
           onNavigateHome={handleNavigateHome}
+          onCategorySelect={handleCategorySelect}
         />
         <AddProduct />
       </div>
@@ -192,6 +209,7 @@ function AppContent() {
           isGuestMode={isGuestMode}
           onLogin={handleLogin}
           onNavigateHome={handleNavigateHome}
+          onCategorySelect={handleCategorySelect}
         />
         <InventoryManagement />
       </div>
@@ -213,6 +231,7 @@ function AppContent() {
           isGuestMode={isGuestMode}
           onLogin={handleLogin}
           onNavigateHome={handleNavigateHome}
+          onCategorySelect={handleCategorySelect}
         />
         <Contact />
       </div>
@@ -234,6 +253,7 @@ function AppContent() {
           isGuestMode={isGuestMode}
           onLogin={handleLogin}
           onNavigateHome={handleNavigateHome}
+          onCategorySelect={handleCategorySelect}
         />
         <Promotions />
       </div>
@@ -258,6 +278,7 @@ function AppContent() {
           isGuestMode={isGuestMode}
           onLogin={handleLogin}
           onNavigateHome={handleNavigateHome}
+          onCategorySelect={handleCategorySelect}
         />
 
         <Container fluid className="py-4">

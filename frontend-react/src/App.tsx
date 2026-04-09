@@ -13,6 +13,7 @@ import InventoryManagement from './components/InventoryManagement';
 import Contact from './components/Contact';
 import Promotions from './components/Promotions';
 import FeaturedProductsCarousel from './components/FeaturedProductsCarousel';
+import ProductDetails from './components/ProductDetails';
 import { useProducts, setStateChangeCallback } from './hooks/useProducts';
 import { CartProvider } from './contexts/CartContext';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -21,7 +22,7 @@ import { Product } from './types/product';
 import { productService } from './services/productService';
 import './App.css';
 
-type AppState = 'main' | 'browse' | 'add-product' | 'inventory-management' | 'contact' | 'promotions';
+type AppState = 'main' | 'browse' | 'add-product' | 'inventory-management' | 'contact' | 'promotions' | 'product-details';
 
 // Track previous render to compare
 let lastRenderProducts: any = undefined;
@@ -32,6 +33,7 @@ function AppContent() {
 
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [appState, setAppState] = useState<AppState>('main');
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [, setForceRender] = useState(0); // Component-level state to trigger re-renders
   const { isGuestMode, setIsGuestMode } = useGuestMode();
   const { auth } = useAuth();
@@ -86,7 +88,8 @@ function AppContent() {
   };
 
   const handleProductClick = (product: Product) => {
-    alert(`Product clicked: ${product.name}\n\nThis would navigate to the product detail page.`);
+    setSelectedProduct(product);
+    setAppState('product-details');
   };
 
   const handleSearchClear = () => {
@@ -99,7 +102,13 @@ function AppContent() {
   };
 
   const handleNavigateHome = () => {
+    setSelectedProduct(null);
     setAppState('main');
+  };
+
+  const handleBackToProducts = () => {
+    setSelectedProduct(null);
+    setAppState('browse');
   };
 
   const handleCategorySelect = async (category: string) => {
@@ -235,6 +244,32 @@ function AppContent() {
           onCategorySelect={handleCategorySelect}
         />
         <Contact />
+      </div>
+    );
+  }
+
+  // Show product details page
+  if (appState === 'product-details' && selectedProduct) {
+    return (
+      <div className="App">
+        <ProfessionalNavBar
+          isGuestMode={isGuestMode}
+          onNavigateHome={handleNavigateHome}
+          setAppState={setAppState}
+        />
+        <AppHeader
+          viewMode={viewMode}
+          onViewModeChange={setViewMode}
+          isGuestMode={isGuestMode}
+          onLogin={handleLogin}
+          onNavigateHome={handleNavigateHome}
+          onCategorySelect={handleCategorySelect}
+        />
+        <ProductDetails
+          product={selectedProduct}
+          onBack={handleBackToProducts}
+          isAuthenticated={auth.isAuthenticated}
+        />
       </div>
     );
   }

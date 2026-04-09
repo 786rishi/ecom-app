@@ -27,10 +27,15 @@ const ProductCard: React.FC<ProductCardProps> = ({
     }
   };
 
-  const handleAddToCart = (e: React.MouseEvent) => {
+  const handleAddToCart = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    addToCart(product);
-    setShowToast(true);
+    try {
+      await addToCart(product);
+      setShowToast(true);
+    } catch (error) {
+      console.error('Failed to add to cart:', error);
+      // Optionally show error toast
+    }
   };
 
   return (

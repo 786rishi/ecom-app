@@ -14,6 +14,8 @@ import Contact from './components/Contact';
 import Promotions from './components/Promotions';
 import FeaturedProductsCarousel from './components/FeaturedProductsCarousel';
 import ProductDetails from './components/ProductDetails';
+import PrivacyPolicy from './components/PrivacyPolicy';
+import Footer from './components/Footer';
 import { useProducts, setStateChangeCallback } from './hooks/useProducts';
 import { CartProvider } from './contexts/CartContext';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -22,7 +24,7 @@ import { Product } from './types/product';
 import { productService } from './services/productService';
 import './App.css';
 
-type AppState = 'main' | 'browse' | 'add-product' | 'inventory-management' | 'contact' | 'promotions' | 'product-details';
+type AppState = 'main' | 'browse' | 'add-product' | 'inventory-management' | 'contact' | 'promotions' | 'product-details' | 'privacy-policy';
 
 // Track previous render to compare
 let lastRenderProducts: any = undefined;
@@ -244,6 +246,7 @@ function AppContent() {
           onCategorySelect={handleCategorySelect}
         />
         <Contact />
+        <Footer onNavigateHome={handleNavigateHome} setAppState={setAppState} />
       </div>
     );
   }
@@ -292,6 +295,22 @@ function AppContent() {
           onCategorySelect={handleCategorySelect}
         />
         <Promotions />
+        <Footer onNavigateHome={handleNavigateHome} setAppState={setAppState} />
+      </div>
+    );
+  }
+
+  // Show privacy policy page
+  if (appState === 'privacy-policy') {
+    return (
+      <div className="App">
+        <ProfessionalNavBar
+          isGuestMode={isGuestMode}
+          onNavigateHome={handleNavigateHome}
+          setAppState={setAppState}
+        />
+        <PrivacyPolicy />
+        <Footer onNavigateHome={handleNavigateHome} setAppState={setAppState} />
       </div>
     );
   }
@@ -408,6 +427,7 @@ function AppContent() {
             </Alert>
           )}
         </Container>
+        <Footer onNavigateHome={handleNavigateHome} setAppState={setAppState} />
       </div>
     );
   }

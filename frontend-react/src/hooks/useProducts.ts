@@ -343,7 +343,10 @@ export const useProducts = (options: UseProductsOptions = {}) => {
     setSort({ field: 'name', direction: 'asc' });
     setPagination(prev => ({ ...prev, page: 1 }));
     URLManager.clearAllParams();
-  }, []);
+    
+    // Trigger fresh data fetch
+    loadProducts();
+  }, [loadProducts]);
 
   // Initialize from URL and load products on mount
   useEffect(() => {

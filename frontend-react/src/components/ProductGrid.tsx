@@ -61,8 +61,8 @@ const ProductGrid: React.FC<ProductGridProps> = ({
 
   return (
     <Row className={`product-grid ${className}`}>
-      {products.map((product) => (
-        <Col key={product.id} {...columns}>
+      {products.map((product, index) => (
+        <Col key={product.id || `product-${index}`} {...columns}>
           <ProductCard
             product={product}
             onProductClick={onProductClick}

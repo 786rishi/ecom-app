@@ -17,6 +17,7 @@ interface AppHeaderProps {
   onNavigateHome?: () => void;
   onCategorySelect?: (category: string) => void;
   onAdvancedFilterClick?: () => void;
+  onClearAdvancedFilters?: () => void;
   hasActiveFilters?: boolean;
 }
 
@@ -28,6 +29,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
   onNavigateHome,
   onCategorySelect,
   onAdvancedFilterClick,
+  onClearAdvancedFilters,
   hasActiveFilters = false
 }) => {
   const { searchQuery, updateSearchQuery, clearFilters } = useProducts();
@@ -42,7 +44,13 @@ const AppHeader: React.FC<AppHeaderProps> = ({
   };
 
   const handleClearAll = () => {
-    clearFilters();
+    // If advanced filters are active, call the advanced filter clear function
+    if (hasActiveFilters && onClearAdvancedFilters) {
+      onClearAdvancedFilters();
+    } else {
+      // Otherwise, use the normal clear filters
+      clearFilters();
+    }
   };
 
   const handleCheckout = () => {

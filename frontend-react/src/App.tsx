@@ -46,6 +46,7 @@ function AppContent() {
   const [showAdvancedFilter, setShowAdvancedFilter] = useState(false);
   const [currentFilters, setCurrentFilters] = useState<AdvancedSearchFilters>({});
   const [filterLoading, setFilterLoading] = useState(false);
+  const [clearFiltersLoading, setClearFiltersLoading] = useState(false);
   const [filteredProducts, setFilteredProducts] = useState<Product[] | null>(null);
   const [isAdvancedFilterActive, setIsAdvancedFilterActive] = useState(false);
   const [advancedFilterPagination, setAdvancedFilterPagination] = useState<any>(null);
@@ -157,6 +158,8 @@ function AppContent() {
           totalPages: response.totalPages
         });
         setForceRender(prev => prev + 1);
+        // Close modal after successfully applying filters
+        setShowAdvancedFilter(false);
       }
     } catch (error) {
       console.error('Error applying advanced filters:', error);
@@ -165,15 +168,44 @@ function AppContent() {
     }
   };
 
-  const handleFiltersClear = () => {
-    setCurrentFilters({});
-    setFilteredProducts(null);
-    setIsAdvancedFilterActive(false);
-    setAdvancedFilterPagination(null);
+  const handleFiltersClear = async () => {
+    console.log('handleFiltersClear called');
     
-    // Reload normal products
-    const { refetch } = hookReturn;
-    refetch();
+    try {
+      // Step 1: Clear the loaded products list immediately
+      console.log('Step 1: Clearing products');
+      setFilteredProducts(null);
+      setIsAdvancedFilterActive(false);
+      setAdvancedFilterPagination(null);
+      
+      // Step 2: Set loading to true to show loader
+      console.log('Step 2: Setting loading to true');
+      setClearFiltersLoading(true);
+      
+      // Step 3: Clear filter states
+      console.log('Step 3: Clearing filter states');
+      setCurrentFilters({});
+      
+      // Step 4: Use hook's clearFilters function to fetch fresh data
+      console.log('Step 4: Calling clearFilters from hook');
+      const { clearFilters } = hookReturn;
+      clearFilters();
+      
+      // Step 5: Wait for the hook to complete the API call
+      console.log('Step 5: Waiting for API call to complete');
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Step 6: Force component re-render to ensure UI updates with fresh data
+      console.log('Step 6: Forcing re-render');
+      setForceRender(prev => prev + 1);
+      
+    } catch (error) {
+      console.error('Error clearing filters:', error);
+    } finally {
+      // Step 7: Hide loader
+      console.log('Step 7: Hiding loader');
+      setClearFiltersLoading(false);
+    }
   };
 
   const handleAdvancedFilterClick = () => {
@@ -263,6 +295,7 @@ function AppContent() {
           onNavigateHome={handleNavigateHome}
           onCategorySelect={handleCategorySelect}
           onAdvancedFilterClick={handleAdvancedFilterClick}
+          onClearAdvancedFilters={handleFiltersClear}
           hasActiveFilters={isAdvancedFilterActive}
         />
         <AddProduct />
@@ -287,6 +320,7 @@ function AppContent() {
           onNavigateHome={handleNavigateHome}
           onCategorySelect={handleCategorySelect}
           onAdvancedFilterClick={handleAdvancedFilterClick}
+          onClearAdvancedFilters={handleFiltersClear}
           hasActiveFilters={isAdvancedFilterActive}
         />
         <InventoryManagement />
@@ -311,6 +345,7 @@ function AppContent() {
           onNavigateHome={handleNavigateHome}
           onCategorySelect={handleCategorySelect}
           onAdvancedFilterClick={handleAdvancedFilterClick}
+          onClearAdvancedFilters={handleFiltersClear}
           hasActiveFilters={isAdvancedFilterActive}
         />
         <Contact />
@@ -336,6 +371,7 @@ function AppContent() {
           onNavigateHome={handleNavigateHome}
           onCategorySelect={handleCategorySelect}
           onAdvancedFilterClick={handleAdvancedFilterClick}
+          onClearAdvancedFilters={handleFiltersClear}
           hasActiveFilters={isAdvancedFilterActive}
         />
         <ProductDetails
@@ -364,6 +400,7 @@ function AppContent() {
           onNavigateHome={handleNavigateHome}
           onCategorySelect={handleCategorySelect}
           onAdvancedFilterClick={handleAdvancedFilterClick}
+          onClearAdvancedFilters={handleFiltersClear}
           hasActiveFilters={isAdvancedFilterActive}
         />
         <Promotions />
@@ -407,7 +444,17 @@ function AppContent() {
     // Use filtered products if advanced filter is active, otherwise use normal products
     const displayProducts = isAdvancedFilterActive ? filteredProducts : products;
     const hasProducts = displayProducts && Array.isArray(displayProducts) && displayProducts.length > 0;
-    const isLoading = loading || filterLoading;
+    const isLoading = loading || filterLoading || clearFiltersLoading;
+    
+    // Debug logging
+    console.log('Loading state debug:', {
+      loading,
+      filterLoading,
+      clearFiltersLoading,
+      isLoading,
+      hasProducts,
+      isAdvancedFilterActive
+    });
     const displayPagination = isAdvancedFilterActive ? advancedFilterPagination : pagination;
 
     return (
@@ -425,6 +472,7 @@ function AppContent() {
           onNavigateHome={handleNavigateHome}
           onCategorySelect={handleCategorySelect}
           onAdvancedFilterClick={handleAdvancedFilterClick}
+          onClearAdvancedFilters={handleFiltersClear}
           hasActiveFilters={isAdvancedFilterActive}
         />
 
@@ -470,10 +518,10 @@ function AppContent() {
             className="mb-4"
           /> */}
 
-          {/* Loading Spinner - only show if no products loaded yet */}
-          {isLoading && !hasProducts && (
+          {/* Loading Spinner - show when loading or clearing filters */}
+          {(isLoading || clearFiltersLoading) && (
             <LoadingSpinner
-              text="Loading products..."
+              text={clearFiltersLoading ? "Clearing filters..." : "Loading products..."}
               centered
               size="lg"
             />

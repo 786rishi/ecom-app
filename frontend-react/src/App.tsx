@@ -12,6 +12,7 @@ import AddProduct from './components/AddProduct';
 import InventoryManagement from './components/InventoryManagement';
 import Contact from './components/Contact';
 import Promotions from './components/Promotions';
+import FeaturedProductsCarousel from './components/FeaturedProductsCarousel';
 import { useProducts, setStateChangeCallback } from './hooks/useProducts';
 import { CartProvider } from './contexts/CartContext';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -279,6 +280,12 @@ function AppContent() {
           onLogin={handleLogin}
           onNavigateHome={handleNavigateHome}
           onCategorySelect={handleCategorySelect}
+        />
+
+        {/* Featured Products Carousel */}
+        <FeaturedProductsCarousel
+          onProductClick={handleProductClick}
+          showAddToCart={auth.isAuthenticated}
         />
 
         <Container fluid className="py-4">

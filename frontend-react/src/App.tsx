@@ -15,6 +15,7 @@ import Promotions from './components/Promotions';
 import FeaturedProductsCarousel from './components/FeaturedProductsCarousel';
 import ProductDetails from './components/ProductDetails';
 import PrivacyPolicy from './components/PrivacyPolicy';
+import OrderHistory from './components/OrderHistory';
 import Footer from './components/Footer';
 import { useProducts, setStateChangeCallback } from './hooks/useProducts';
 import { CartProvider } from './contexts/CartContext';
@@ -24,7 +25,7 @@ import { Product } from './types/product';
 import { productService } from './services/productService';
 import './App.css';
 
-type AppState = 'main' | 'browse' | 'add-product' | 'inventory-management' | 'contact' | 'promotions' | 'product-details' | 'privacy-policy';
+type AppState = 'main' | 'browse' | 'add-product' | 'inventory-management' | 'contact' | 'promotions' | 'product-details' | 'privacy-policy' | 'order-history';
 
 // Track previous render to compare
 let lastRenderProducts: any = undefined;
@@ -151,8 +152,14 @@ function AppContent() {
         setAppState('inventory-management');
       } else if (hash === 'promotions' && auth.isAuthenticated && auth.user?.roles?.includes('admin')) {
         setAppState('promotions');
+      } else if (hash === 'OrderHistory' && auth.isAuthenticated) {
+        setAppState('order-history');
       } else if (hash === 'contact') {
         setAppState('contact');
+      } else if (hash === 'OrderHistory' && !auth.isAuthenticated) {
+        // Redirect non-authenticated users to main
+        setAppState('main');
+        window.location.hash = '';
       } else if (hash === 'product' || hash === 'Inventory' || hash === 'promotions') {
         // Redirect non-admin users to browse
         setAppState('browse');
@@ -315,6 +322,21 @@ function AppContent() {
     );
   }
 
+  // Show order history page
+  if (appState === 'order-history') {
+    return (
+      <div className="App">
+        <ProfessionalNavBar
+          isGuestMode={isGuestMode}
+          onNavigateHome={handleNavigateHome}
+          setAppState={setAppState}
+        />
+        <OrderHistory />
+        <Footer onNavigateHome={handleNavigateHome} setAppState={setAppState} />
+      </div>
+    );
+  }
+
   // Show products page
   if (appState === 'browse') {
     const hasProducts = products && Array.isArray(products) && products.length > 0;
@@ -327,7 +349,7 @@ function AppContent() {
           onNavigateHome={handleNavigateHome}
           setAppState={setAppState}
         />
-        <AppHeader
+                <AppHeader
           viewMode={viewMode}
           onViewModeChange={setViewMode}
           isGuestMode={isGuestMode}

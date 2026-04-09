@@ -9,6 +9,14 @@ interface ProfessionalNavBarProps {
   setAppState?: (state: 'main' | 'browse' | 'add-product' | 'inventory-management') => void;
 }
 
+interface NavItem {
+  name: string;
+  href: string;
+  icon: any;
+  action?: () => void;
+  requireAuth?: boolean;
+}
+
 const ProfessionalNavBar: React.FC<ProfessionalNavBarProps> = ({
   onNavigateHome,
   isGuestMode = false,
@@ -26,7 +34,7 @@ const ProfessionalNavBar: React.FC<ProfessionalNavBarProps> = ({
     setExpanded(false);
   };
 
-  const navItems = [
+  const navItems: NavItem[] = [
     {
       name: 'Home',
       href: '#home',
@@ -37,12 +45,21 @@ const ProfessionalNavBar: React.FC<ProfessionalNavBarProps> = ({
       name: 'Products',
       href: '#products',
       action: () => setAppState?.('browse'),
-      icon: '📦'
+       icon: '📦'
     },
     {
       name: 'About',
       href: '#about',
       icon: 'ℹ️'
+    },
+    {
+      name: 'Orders',
+      href: '#OrderHistory',
+      icon: 'Orders',
+      action: () => {
+        window.location.hash = 'OrderHistory';
+      },
+      requireAuth: true
     },
     {
       name: 'Contact',
@@ -105,18 +122,25 @@ const ProfessionalNavBar: React.FC<ProfessionalNavBarProps> = ({
 
         <Navbar.Collapse id="professional-nav">
           <Nav className="mx-auto main-nav">
-            {navItems.map((item, index) => (
-              <Nav.Link
-                key={index}
-                href={item.href}
-                className="nav-item-custom"
-                onClick={(e) => handleNavClick(e, item.action)}
-              >
-                <span className="nav-icon">{item.icon}</span>
-                <span className="nav-text">{item.name}</span>
-              </Nav.Link>
-            ))}
+            {navItems.map((item, index) => {
+              // Skip items that require authentication if user is not authenticated
+              if (item.requireAuth && !auth.isAuthenticated) {
+                return null;
+              }
+              return (
+                <Nav.Link
+                  key={index}
+                  href={item.href}
+                  className="nav-item-custom"
+                  onClick={(e) => handleNavClick(e, item.action)}
+                >
+                  <span className="nav-icon">{item.icon}</span>
+                  <span className="nav-text">{item.name}</span>
+                </Nav.Link>
+              );
+            })}
 
+            
             {auth.isAuthenticated && auth.user?.roles?.includes('admin') && (
               <Dropdown as={Nav.Item} className="admin-dropdown">
                 <Dropdown.Toggle 

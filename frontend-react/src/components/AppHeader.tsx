@@ -18,6 +18,7 @@ interface AppHeaderProps {
   onCategorySelect?: (category: string) => void;
   onAdvancedFilterClick?: () => void;
   onClearAdvancedFilters?: () => void;
+  onSearch?: (query: string) => void;
   hasActiveFilters?: boolean;
 }
 
@@ -30,6 +31,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
   onCategorySelect,
   onAdvancedFilterClick,
   onClearAdvancedFilters,
+  onSearch,
   hasActiveFilters = false
 }) => {
   const { searchQuery, updateSearchQuery, clearFilters } = useProducts();
@@ -40,7 +42,12 @@ const AppHeader: React.FC<AppHeaderProps> = ({
   const [showLogin, setShowLogin] = useState(false);
 
   const handleSearch = (query: string) => {
-    updateSearchQuery(query);
+    // Use enhanced search handler if provided, otherwise use hook's updateSearchQuery
+    if (onSearch) {
+      onSearch(query);
+    } else {
+      updateSearchQuery(query);
+    }
   };
 
   const handleClearAll = () => {

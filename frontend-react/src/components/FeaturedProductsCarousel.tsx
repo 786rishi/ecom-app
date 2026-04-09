@@ -26,7 +26,7 @@ const FeaturedProductsCarousel: React.FC<FeaturedProductsCarouselProps> = ({
     const fetchFeaturedProducts = async () => {
       try {
         setLoading(true);
-        const response: ProductResponse = await productService.searchProducts('featured', 0, 12);
+        const response: ProductResponse = await productService.searchProducts('featured', 0, 50);
         setFeaturedProducts(response.content || []);
         setError(null);
       } catch (err) {

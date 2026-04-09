@@ -55,7 +55,7 @@ const ProfessionalNavBar: React.FC<ProfessionalNavBarProps> = ({
     {
       name: 'Orders',
       href: '#OrderHistory',
-      icon: 'Orders',
+      icon: '',
       action: () => {
         window.location.hash = 'OrderHistory';
       },

@@ -38,6 +38,20 @@ export interface SearchParams {
   sortOrder?: 'asc' | 'desc';
 }
 
+export interface AdvancedSearchFilters {
+  keyword?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  inStock?: boolean;
+  brand?: string;
+  color?: string;
+  minRating?: number;
+  sortBy?: string;
+  sortOrder?: string;
+  page?: number;
+  size?: number;
+}
+
 export const productService = {
   async getProducts(params: SearchParams = {}): Promise<ProductResponse> {
     try {
@@ -125,6 +139,77 @@ export const productService = {
       return product;
     } catch (error) {
 
+      throw error;
+    }
+  },
+
+  async advancedSearch(filters: AdvancedSearchFilters): Promise<ProductResponse> {
+    try {
+      // Build request body only with fields that have meaningful values
+      const requestBody: any = {};
+      
+      // Only include keyword if it has a value
+      if (filters.keyword && filters.keyword.trim()) {
+        requestBody.keyword = filters.keyword.trim();
+      }
+      
+      // Only include minPrice if it's greater than 0
+      if (filters.minPrice !== undefined && filters.minPrice > 0) {
+        requestBody.minPrice = filters.minPrice;
+      }
+      
+      // Only include maxPrice if it's less than 50000 (default max)
+      if (filters.maxPrice !== undefined && filters.maxPrice < 50000) {
+        requestBody.maxPrice = filters.maxPrice;
+      }
+      
+      // Include inStock if it's explicitly set (either true or false)
+      if (filters.inStock !== undefined) {
+        requestBody.inStock = filters.inStock;
+      }
+      
+      // Only include brand if it has a value
+      if (filters.brand && filters.brand.trim()) {
+        requestBody.brand = filters.brand.trim();
+      }
+      
+      // Only include color if it has a value
+      if (filters.color && filters.color.trim()) {
+        requestBody.color = filters.color.trim();
+      }
+      
+      // Only include minRating if it's greater than 0
+      if (filters.minRating !== undefined && filters.minRating > 0) {
+        requestBody.minRating = filters.minRating;
+      }
+      
+      // Always include sortBy and sortOrder if specified
+      if (filters.sortBy) {
+        requestBody.sortBy = filters.sortBy;
+      }
+      if (filters.sortOrder) {
+        requestBody.sortOrder = filters.sortOrder;
+      }
+      
+      // Always include page and size
+      requestBody.page = filters.page !== undefined ? filters.page : 0;
+      requestBody.size = filters.size !== undefined ? filters.size : 10;
+
+      const response = await fetch('http://localhost:8090/products/products/search', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody)
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data: ProductResponse = await response.json();
+      return data;
+    } catch (error) {
       throw error;
     }
   },

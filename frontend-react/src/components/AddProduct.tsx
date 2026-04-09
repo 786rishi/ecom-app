@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Container, Form, Button, Alert, Row, Col, Card } from 'react-bootstrap';
+import React, { useState, useRef, useEffect } from 'react';
+import { Container, Form, Button, Alert, Row, Col, Card, Dropdown, InputGroup } from 'react-bootstrap';
 import { useAuth } from '../contexts/AuthContext';
 
 interface ProductFormData {
@@ -16,6 +16,146 @@ interface ProductFormData {
   attributes: { [key: string]: string };
   images: string[];
 }
+
+// Fixed categories list
+const CATEGORIES = [
+  'Women Kurtas & Suits',
+  'Women Kurtis & Tunics',
+  'Women Leggings, Salwars & Churidars',
+  'Women Skirts & Palazzos',
+  'Women Sarees & Blouses',
+  'Women Dress Material',
+  'Women Lehenga Choli',
+  'Women Dupattas & Shawls',
+  'Women Dresses & Jumpsuits',
+  'Women Tops, T-Shirts & Shirts',
+  'Women Jeans & Jeggings',
+  'Women Trousers & Capris',
+  'Women Shorts & Skirts',
+  'Women Shrugs',
+  'Women Sweaters & Sweatshirts',
+  'Women Jackets & Waistcoats',
+  'Women Coats & Blazers',
+  'Women Women Watches',
+  'Women Analog',
+  'Women Chronograph',
+  'Women Digital',
+  'Women Analog & Digital',
+  'Women Sunglasses',
+  'Women Eye Glasses',
+  'Women Belt',
+  'Men T-Shirts',
+  'Men Casual Shirts',
+  'Men Formal Shirts',
+  'Men Suits',
+  'Men Jeans',
+  'Men Casual Trousers',
+  'Men Formal Trousers',
+  'Men Shorts',
+  'Men Track Pants',
+  'Men Sweaters & Sweatshirts',
+  'Men Jackets',
+  'Men Blazers & Coats',
+  'Men Sports & Active Wear',
+  'Men Indian & Festive Wear',
+  'Men Innerwear & Sleepwear',
+  'Men Watches & Wearables',
+  'Men Sunglasses & Frames',
+  'Men Bags & Backpacks',
+  'Men Luggage & Trolleys',
+  'Men Personal Care & Grooming',
+  'Men Wallets & Belts',
+  'Men Fashion Accessories'
+];
+
+const SearchableDropdown: React.FC<{
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+}> = ({ value, onChange, placeholder = 'Select category' }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const filteredCategories = CATEGORIES.filter(category =>
+    category.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+        setSearchTerm('');
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleSelect = (category: string) => {
+    onChange(category);
+    setIsOpen(false);
+    setSearchTerm('');
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+    setIsOpen(true);
+  };
+
+  const handleFocus = () => {
+    setIsOpen(true);
+    setSearchTerm('');
+  };
+
+  return (
+    <div ref={dropdownRef} className="position-relative">
+      <InputGroup>
+        <Form.Control
+          type="text"
+          value={isOpen ? searchTerm : value}
+          onChange={handleInputChange}
+          onFocus={handleFocus}
+          placeholder={placeholder}
+          autoComplete="off"
+        />
+        <Button
+          variant="outline-secondary"
+          onClick={() => {
+            setIsOpen(!isOpen);
+            if (!isOpen) setSearchTerm('');
+          }}
+        >
+          {isOpen ? '▲' : '▼'}
+        </Button>
+      </InputGroup>
+      
+      {isOpen && (
+        <div className="position-absolute w-100 bg-white border border-top-0 rounded-bottom shadow-lg z-1000" style={{ maxHeight: '200px', overflowY: 'auto', zIndex: 1000 }}>
+          {filteredCategories.length > 0 ? (
+            filteredCategories.map((category, index) => (
+              <div
+                key={index}
+                className="px-3 py-2 cursor-pointer hover-bg-light"
+                style={{ cursor: 'pointer' }}
+                onClick={() => handleSelect(category)}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f8f9fa'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+              >
+                {category}
+              </div>
+            ))
+          ) : (
+            <div className="px-3 py-2 text-muted">
+              No categories found
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
 
 const AddProduct: React.FC = () => {
   const { auth } = useAuth();
@@ -201,12 +341,10 @@ const AddProduct: React.FC = () => {
               <Col md={6}>
                 <Form.Group className="mb-3">
                   <Form.Label>Category *</Form.Label>
-                  <Form.Control
-                    type="text"
-                    name="category"
+                  <SearchableDropdown
                     value={formData.category}
-                    onChange={handleInputChange}
-                    required
+                    onChange={(value) => setFormData(prev => ({ ...prev, category: value }))}
+                    placeholder="Select category"
                   />
                 </Form.Group>
               </Col>

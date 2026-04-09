@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Container, Alert } from 'react-bootstrap';
+import { Container, Alert, Row, Col } from 'react-bootstrap';
 import AppHeader from './components/AppHeader';
 import ProfessionalNavBar from './components/ProfessionalNavBar';
 import ProductGrid from './components/ProductGrid';
@@ -16,13 +16,14 @@ import FeaturedProductsCarousel from './components/FeaturedProductsCarousel';
 import ProductDetails from './components/ProductDetails';
 import PrivacyPolicy from './components/PrivacyPolicy';
 import OrderHistory from './components/OrderHistory';
+import AdvanceFilter from './components/AdvanceFilter';
 import Footer from './components/Footer';
 import { useProducts, setStateChangeCallback } from './hooks/useProducts';
 import { CartProvider } from './contexts/CartContext';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { GuestModeProvider, useGuestMode } from './contexts/GuestModeContext';
 import { Product } from './types/product';
-import { productService } from './services/productService';
+import { productService, AdvancedSearchFilters } from './services/productService';
 import './App.css';
 
 type AppState = 'main' | 'browse' | 'add-product' | 'inventory-management' | 'contact' | 'promotions' | 'product-details' | 'privacy-policy' | 'order-history';
@@ -40,6 +41,14 @@ function AppContent() {
   const [, setForceRender] = useState(0); // Component-level state to trigger re-renders
   const { isGuestMode, setIsGuestMode } = useGuestMode();
   const { auth } = useAuth();
+  
+  // Advanced filter state
+  const [showAdvancedFilter, setShowAdvancedFilter] = useState(false);
+  const [currentFilters, setCurrentFilters] = useState<AdvancedSearchFilters>({});
+  const [filterLoading, setFilterLoading] = useState(false);
+  const [filteredProducts, setFilteredProducts] = useState<Product[] | null>(null);
+  const [isAdvancedFilterActive, setIsAdvancedFilterActive] = useState(false);
+  const [advancedFilterPagination, setAdvancedFilterPagination] = useState<any>(null);
 
   // Register callback to be called when hook state changes
   React.useEffect(() => {
@@ -129,6 +138,52 @@ function AppContent() {
     }
   };
 
+  // Advanced filter handlers
+  const handleFiltersApply = async (filters: AdvancedSearchFilters) => {
+    setFilterLoading(true);
+    setCurrentFilters(filters);
+    
+    try {
+      const response = await productService.advancedSearch(filters);
+      
+      // Update products with filtered results
+      if (response && response.content && Array.isArray(response.content)) {
+        setFilteredProducts(response.content);
+        setIsAdvancedFilterActive(true);
+        setAdvancedFilterPagination({
+          page: response.number + 1,
+          pageSize: response.size,
+          total: response.totalElements,
+          totalPages: response.totalPages
+        });
+        setForceRender(prev => prev + 1);
+      }
+    } catch (error) {
+      console.error('Error applying advanced filters:', error);
+    } finally {
+      setFilterLoading(false);
+    }
+  };
+
+  const handleFiltersClear = () => {
+    setCurrentFilters({});
+    setFilteredProducts(null);
+    setIsAdvancedFilterActive(false);
+    setAdvancedFilterPagination(null);
+    
+    // Reload normal products
+    const { refetch } = hookReturn;
+    refetch();
+  };
+
+  const handleAdvancedFilterClick = () => {
+    setShowAdvancedFilter(true);
+  };
+
+  const handleAdvancedFilterHide = () => {
+    setShowAdvancedFilter(false);
+  };
+
   // Listen for login success event
   React.useEffect(() => {
     const handleLoginSuccess = () => {
@@ -207,6 +262,8 @@ function AppContent() {
           onLogin={handleLogin}
           onNavigateHome={handleNavigateHome}
           onCategorySelect={handleCategorySelect}
+          onAdvancedFilterClick={handleAdvancedFilterClick}
+          hasActiveFilters={isAdvancedFilterActive}
         />
         <AddProduct />
       </div>
@@ -229,6 +286,8 @@ function AppContent() {
           onLogin={handleLogin}
           onNavigateHome={handleNavigateHome}
           onCategorySelect={handleCategorySelect}
+          onAdvancedFilterClick={handleAdvancedFilterClick}
+          hasActiveFilters={isAdvancedFilterActive}
         />
         <InventoryManagement />
       </div>
@@ -251,6 +310,8 @@ function AppContent() {
           onLogin={handleLogin}
           onNavigateHome={handleNavigateHome}
           onCategorySelect={handleCategorySelect}
+          onAdvancedFilterClick={handleAdvancedFilterClick}
+          hasActiveFilters={isAdvancedFilterActive}
         />
         <Contact />
         <Footer onNavigateHome={handleNavigateHome} setAppState={setAppState} />
@@ -274,6 +335,8 @@ function AppContent() {
           onLogin={handleLogin}
           onNavigateHome={handleNavigateHome}
           onCategorySelect={handleCategorySelect}
+          onAdvancedFilterClick={handleAdvancedFilterClick}
+          hasActiveFilters={isAdvancedFilterActive}
         />
         <ProductDetails
           product={selectedProduct}
@@ -300,6 +363,8 @@ function AppContent() {
           onLogin={handleLogin}
           onNavigateHome={handleNavigateHome}
           onCategorySelect={handleCategorySelect}
+          onAdvancedFilterClick={handleAdvancedFilterClick}
+          hasActiveFilters={isAdvancedFilterActive}
         />
         <Promotions />
         <Footer onNavigateHome={handleNavigateHome} setAppState={setAppState} />
@@ -339,8 +404,11 @@ function AppContent() {
 
   // Show products page
   if (appState === 'browse') {
-    const hasProducts = products && Array.isArray(products) && products.length > 0;
-    const isLoading = loading;
+    // Use filtered products if advanced filter is active, otherwise use normal products
+    const displayProducts = isAdvancedFilterActive ? filteredProducts : products;
+    const hasProducts = displayProducts && Array.isArray(displayProducts) && displayProducts.length > 0;
+    const isLoading = loading || filterLoading;
+    const displayPagination = isAdvancedFilterActive ? advancedFilterPagination : pagination;
 
     return (
       <div className="App">
@@ -356,6 +424,8 @@ function AppContent() {
           onLogin={handleLogin}
           onNavigateHome={handleNavigateHome}
           onCategorySelect={handleCategorySelect}
+          onAdvancedFilterClick={handleAdvancedFilterClick}
+          hasActiveFilters={isAdvancedFilterActive}
         />
 
         {/* Featured Products Carousel */}
@@ -378,7 +448,7 @@ function AppContent() {
             fontSize: '12px',
             fontWeight: 'bold'
           }}>
-            🔍 PRODUCTS: {products?.length || 0} | SEARCH: '{searchQuery}' | LOADING: {loading ? 'YES' : 'NO'}
+            PRODUCTS: {displayProducts?.length || 0} | SEARCH: '{searchQuery}' | LOADING: {isLoading ? 'YES' : 'NO'} | FILTER: {isAdvancedFilterActive ? 'ACTIVE' : 'INACTIVE'}
           </div>
 
           {/* Error Display */}
@@ -414,30 +484,45 @@ function AppContent() {
             <>
               {viewMode === 'grid' ? (
                 <ProductGrid
-                  products={products}
+                  products={displayProducts || []}
                   onProductClick={handleProductClick}
                   showAddToCart={auth.isAuthenticated}
-                  loading={loading}
+                  loading={isLoading}
                   className="mb-4"
+                  columns={{
+                   
+                    md: 3
+                    
+                  }}
                 />
               ) : (
                 <ProductList
-                  products={products}
+                  products={displayProducts || []}
                   onProductClick={handleProductClick}
                   showAddToCart={auth.isAuthenticated}
-                  loading={loading}
+                  loading={isLoading}
                   className="mb-4"
                 />
               )}
 
               {/* Pagination */}
-              <PaginationComponent
-                pagination={pagination}
-                onPageChange={updatePage}
-                onPageSizeChange={updatePageSize}
-                showPageSizeSelector={true}
-                className="mt-4"
-              />
+              {displayPagination && (
+                <PaginationComponent
+                  pagination={displayPagination}
+                  onPageChange={isAdvancedFilterActive ? (page) => {
+                    // For advanced filter, we need to re-apply filters with new page
+                    const newFilters = { ...currentFilters, page: page - 1 };
+                    handleFiltersApply(newFilters);
+                  } : updatePage}
+                  onPageSizeChange={isAdvancedFilterActive ? (size) => {
+                    // For advanced filter, we need to re-apply filters with new size
+                    const newFilters = { ...currentFilters, size, page: 0 };
+                    handleFiltersApply(newFilters);
+                  } : updatePageSize}
+                  showPageSizeSelector={true}
+                  className="mt-4"
+                />
+              )}
             </>
           )}
 
@@ -449,6 +534,17 @@ function AppContent() {
             </Alert>
           )}
         </Container>
+        
+        {/* Advanced Filter Modal */}
+        <AdvanceFilter
+          show={showAdvancedFilter}
+          onHide={handleAdvancedFilterHide}
+          onFiltersApply={handleFiltersApply}
+          onFiltersClear={handleFiltersClear}
+          loading={filterLoading}
+          currentFilters={currentFilters}
+        />
+        
         <Footer onNavigateHome={handleNavigateHome} setAppState={setAppState} />
       </div>
     );

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Container, Button, Nav, NavDropdown } from 'react-bootstrap';
+import { Container, Button, Nav, NavDropdown, Badge } from 'react-bootstrap';
 import SearchInput from './SearchInput';
 import CheckoutModal from './CheckoutModal';
 import CartDropdown from './CartDropdown';
@@ -16,6 +16,8 @@ interface AppHeaderProps {
   onLogin?: () => void;
   onNavigateHome?: () => void;
   onCategorySelect?: (category: string) => void;
+  onAdvancedFilterClick?: () => void;
+  hasActiveFilters?: boolean;
 }
 
 const AppHeader: React.FC<AppHeaderProps> = ({
@@ -24,7 +26,9 @@ const AppHeader: React.FC<AppHeaderProps> = ({
   isGuestMode = false,
   onLogin,
   onNavigateHome,
-  onCategorySelect
+  onCategorySelect,
+  onAdvancedFilterClick,
+  hasActiveFilters = false
 }) => {
   const { searchQuery, updateSearchQuery, clearFilters } = useProducts();
 
@@ -201,6 +205,22 @@ const AppHeader: React.FC<AppHeaderProps> = ({
                 ☰
               </Button>
             </div>
+
+            {/* Advanced Filter */}
+            <Button
+              variant="outline-primary"
+              size="sm"
+              onClick={onAdvancedFilterClick}
+              title="Advanced filters"
+              className="d-flex align-items-center"
+            >
+              <span className="me-1">Advanced Filter</span>
+              {hasActiveFilters && (
+                <Badge bg="danger" className="ms-1" style={{ fontSize: '0.6em' }}>
+                  Active
+                </Badge>
+              )}
+            </Button>
 
             {/* Clear Filters */}
             <Button

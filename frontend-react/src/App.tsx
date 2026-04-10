@@ -126,16 +126,40 @@ function AppContent() {
 
   const handleCategorySelect = async (category: string) => {
     try {
+      console.log("category selected: ", category)
       // Make sure we're in browse state
       if (appState !== 'browse') {
         setAppState('browse');
       }
       
-      // Use the hook's updateSearchQuery function which handles the API call
-      const { updateSearchQuery } = hookReturn;
-      updateSearchQuery(category);
+      // Use advanced search API with category as keyword
+      setFilterLoading(true);
+      setCurrentFilters({ keyword: category });
+      setIsAdvancedFilterActive(true);
+      
+      const searchFilters: AdvancedSearchFilters = {
+        keyword: category,
+        page: 0,
+        size: 12
+      };
+      
+      const response = await productService.advancedSearch(searchFilters);
+      
+      // Update products with category results
+      if (response && response.content && Array.isArray(response.content)) {
+        setFilteredProducts(response.content);
+        setAdvancedFilterPagination({
+          page: response.number + 1,
+          pageSize: response.size,
+          total: response.totalElements,
+          totalPages: response.totalPages
+        });
+        setForceRender(prev => prev + 1);
+      }
     } catch (error) {
       console.error('Error fetching category products:', error);
+    } finally {
+      setFilterLoading(false);
     }
   };
 
@@ -217,6 +241,7 @@ function AppContent() {
     }
     
     // Use hook's updateSearchQuery function directly - let the hook handle loading
+    console.log("updateSearchQuery from handleSearch: ", query)
     const { updateSearchQuery } = hookReturn;
     updateSearchQuery(query);
   };

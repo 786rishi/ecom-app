@@ -101,6 +101,7 @@ export const useProducts = (options: UseProductsOptions = {}) => {
     try {
       const { page, pageSize } = paginationRef.current;
 
+      setLoading(true);
       const response = await productService.searchProducts(
         query,
         page - 1,
@@ -115,6 +116,7 @@ export const useProducts = (options: UseProductsOptions = {}) => {
 
       // Update search results
       if (response && response.content && Array.isArray(response.content)) {
+        console.log("setting products from search result:: ", response.content)
         setAllProducts([...response.content]);
         setFilteredProducts([...response.content]);
         filteredProducts_ = [...response.content];
@@ -138,6 +140,8 @@ export const useProducts = (options: UseProductsOptions = {}) => {
     } finally {
       if (latestQueryRef.current === query) {
         setIsSearching(false);
+        setLoading(false);
+
       }
     }
   }, []); // No dependencies
@@ -154,20 +158,18 @@ export const useProducts = (options: UseProductsOptions = {}) => {
       // Use current state values instead of dependencies
       const currentPage = paginationRef.current.page;
       const currentPageSize = paginationRef.current.pageSize;
-      const currentSearchQuery = searchQuery //searchQueryRef.current;
+      const currentSearchQuery = searchQuery;
       const currentCategories = filter.categories;
       const currentSortField = sort.field;
       const currentSortDirection = sort.direction;
 
       // Check if we have a search query
-
       if (currentSearchQuery && currentSearchQuery.trim()) {
-        return;
+        // For search queries, use the search API
         setAllProducts([]);
         setFilteredProducts([]);
         console.log("setFilteredProducts: []");
         filteredProducts_ = [];
-
 
         const searchResponse = await productService.searchProducts(
           currentSearchQuery,
@@ -177,15 +179,10 @@ export const useProducts = (options: UseProductsOptions = {}) => {
 
         // Explicitly set the search results
         if (searchResponse && searchResponse.content && Array.isArray(searchResponse.content)) {
-
           setAllProducts(searchResponse.content);
           setFilteredProducts(searchResponse.content);
           console.log("setFilteredProducts:", searchResponse.content);
-
           filteredProducts_ = [...searchResponse.content];
-
-        } else {
-
         }
 
         // Update pagination for search results
@@ -196,12 +193,10 @@ export const useProducts = (options: UseProductsOptions = {}) => {
             total: searchResponse.totalElements,
             totalPages: searchResponse.totalPages
           };
-
-
           return updatedPagination;
         });
       } else {
-        // Use general products API for non-search queries
+        // Use general products API for non-search queries (including category filters)
         const params: SearchParams = {
           page: currentPage - 1, // API uses 0-based indexing
           size: currentPageSize,
@@ -210,11 +205,7 @@ export const useProducts = (options: UseProductsOptions = {}) => {
           sortOrder: currentSortDirection
         };
 
-
         const response = await productService.getProducts(params);
-
-
-
 
         setAllProducts(response.content);
         setFilteredProducts(response.content);
@@ -245,7 +236,6 @@ export const useProducts = (options: UseProductsOptions = {}) => {
 
     } catch (err) {
       setError('Failed to load products');
-
     } finally {
       setLoading(false);
       isLoadingRef.current = false;
@@ -268,6 +258,7 @@ export const useProducts = (options: UseProductsOptions = {}) => {
     URLManager.updateSearchParams({ query, page: 1 });
 
     // Trigger debounced search
+    debugger
     debouncedSearch(query);
   }, []); // Remove debouncedSearch dependency
 

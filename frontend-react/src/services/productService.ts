@@ -93,10 +93,7 @@ export const productService = {
       searchParams.append('page', page.toString());
       searchParams.append('size', size.toString());
 
-      const url = `http://localhost:8090/products/products/search?${searchParams.toString()}`;
-
-
-      const response = await fetch(url, {
+      const response = await fetch(`http://localhost:8090/products/products/search?${searchParams.toString()}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',

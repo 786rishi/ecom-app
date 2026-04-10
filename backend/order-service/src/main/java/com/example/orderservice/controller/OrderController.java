@@ -5,6 +5,8 @@ import com.example.orderservice.entity.order.Order;
 import com.example.orderservice.service.OrderService;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/orders")
 public class OrderController {
@@ -13,6 +15,11 @@ public class OrderController {
 
     public OrderController(OrderService service) {
         this.service = service;
+    }
+
+    @GetMapping("/{userId}")
+    public List<Order> findOrderByUserId(@PathVariable("userId") String userId) {
+        return service.findOrderByUserId(userId);
     }
 
     @PostMapping("/checkout")

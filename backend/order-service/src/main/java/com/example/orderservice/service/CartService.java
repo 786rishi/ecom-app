@@ -48,7 +48,6 @@ public class CartService {
     @Transactional("cartTransactionManager")
     public void clearCart(String userId) {
         Cart cart = getCart(userId);
-        cart.getItems().clear();
-        repository.save(cart);
+        repository.deleteById(cart.getId());
     }
 }

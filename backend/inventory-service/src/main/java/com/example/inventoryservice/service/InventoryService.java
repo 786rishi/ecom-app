@@ -7,6 +7,7 @@ import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 public class InventoryService {
@@ -118,6 +119,10 @@ public class InventoryService {
     public Inventory get(String productId) {
         return repository.findByProductId(productId)
                 .orElseThrow(() -> new RuntimeException("Not found"));
+    }
+
+    public List<Inventory> getAll() {
+        return repository.findAll();
     }
 
 }

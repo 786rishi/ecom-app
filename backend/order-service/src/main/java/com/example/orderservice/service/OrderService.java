@@ -92,6 +92,8 @@ public class OrderService {
         order.setPaymentId(payment.getTransactionId());
         order.setStatus("PAID");
 
+        cartService.clearCart(order.getUserId());
+
         return repository.save(order);
     }
 
@@ -112,4 +114,10 @@ public class OrderService {
 
         return repository.save(order);
     }
+
+    @Transactional("orderTransactionManager")
+    public List<Order> findOrderByUserId(String userId) {
+        return repository.findByUserIdOrderByCreatedAtDesc(userId);
+    }
+
 }

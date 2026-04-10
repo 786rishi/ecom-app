@@ -1,0 +1,12 @@
+server:
+  port: 8089
+
+spring:
+  application:
+    name: promo-service
+
+
+  data:
+    mongodb:
+      uri: mongodb://admin:admin@localhost:27017/promodb?authSource=admin
+      auto-index-creation: true

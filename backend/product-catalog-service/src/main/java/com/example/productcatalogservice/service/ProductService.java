@@ -1,5 +1,7 @@
 package com.example.productcatalogservice.service;
 
+import com.example.productcatalogservice.client.InventoryClient;
+import com.example.productcatalogservice.dto.ProductSearchRequest;
 import com.example.productcatalogservice.exception.ProductNotFoundException;
 import com.example.productcatalogservice.model.Product;
 import com.example.productcatalogservice.repository.ProductRepository;
@@ -9,16 +11,15 @@ import org.opensearch.action.search.SearchRequest;
 import org.opensearch.action.search.SearchResponse;
 import org.opensearch.client.RequestOptions;
 import org.opensearch.client.RestHighLevelClient;
+import org.opensearch.index.query.BoolQueryBuilder;
 import org.opensearch.index.query.QueryBuilders;
-import org.opensearch.script.Script;
-import org.opensearch.script.ScriptType;
+import org.opensearch.index.query.RangeQueryBuilder;
 import org.opensearch.search.SearchHit;
 import org.opensearch.search.builder.SearchSourceBuilder;
-import org.opensearch.search.sort.ScriptSortBuilder;
-import org.opensearch.search.sort.SortBuilders;
 import org.opensearch.search.sort.SortOrder;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
@@ -36,22 +37,17 @@ public class ProductService {
     private final ProductRepository repository;
     private final RestHighLevelClient restHighLevelClient;
     private final ObjectMapper objectMapper;
-  //  private final ProductSearchRepository searchRepository;
-   // private final ElasticsearchOperations elasticsearchOperations;
+    private final InventoryClient inventoryClient;
 
     public ProductService(ProductRepository repository, RestHighLevelClient restHighLevelClient,
-                          ObjectMapper objectMapper){
+                          ObjectMapper objectMapper, InventoryClient inventoryClient){
         this.repository = repository;
         this.restHighLevelClient = restHighLevelClient;
         this.objectMapper = objectMapper;
+        this.inventoryClient = inventoryClient;
     }
 
-//    public Product create(Product product) {
-//        product.setCreatedAt(LocalDateTime.now());
-//        product.setUpdatedAt(LocalDateTime.now());
-//        product.setActive(true);
-//        return repository.save(product);
-//    }
+
 
     public Product create(Product product) throws IOException {
         product.setCreatedAt(LocalDateTime.now());
@@ -62,19 +58,13 @@ public class ProductService {
         // 🔥 sync to ES
         indexProduct(product);
 
+        inventoryClient.add(saved.getId(), product.getAvailableQuantity());
+
         return saved;
     }
 
     public void indexProduct(Product product) throws IOException {
 
-//        IndexRequest request = new IndexRequest("products")
-//                .id(product.getId())
-//                .source(
-//                        objectMapper.writeValueAsString(product),
-//                        XContentType.JSON
-//                );
-//
-//        restHighLevelClient.index(request, RequestOptions.DEFAULT);
 
         Map<String, Object> jsonMap = new HashMap<>();
 
@@ -82,10 +72,32 @@ public class ProductService {
         jsonMap.put("description", product.getDescription());
         jsonMap.put("category", product.getCategory());
 
-        // 🔥 ADD THESE
-        jsonMap.put("featured", product.getFeatured());
-        jsonMap.put("featureStart", product.getFeatureStart() != null ? product.getFeatureStart().toString(): null);
-        jsonMap.put("featureEnd",  product.getFeatureEnd() != null ?  product.getFeatureEnd().toString(): null);
+        jsonMap.put("price", product.getPrice());
+        jsonMap.put("active", product.getActive());
+
+        jsonMap.put("inStock", product.getAvailableQuantity() > 0);
+        jsonMap.put("availableQuantity", product.getAvailableQuantity());
+
+        jsonMap.put("attributes", product.getAttributes());
+
+
+
+
+        if (product.getFeatured() != null) {
+            jsonMap.put("featured", product.getFeatured());
+        }
+
+        if (product.getFeatureStart() != null) {
+            jsonMap.put("featureStart", product.getFeatureStart().toString());
+        }
+
+        if (product.getFeatureEnd() != null) {
+            jsonMap.put("featureEnd", product.getFeatureEnd().toString());
+        }
+
+        if (product.getCreatedAt() != null) {
+            jsonMap.put("createdAt", product.getCreatedAt().toString());
+        }
 
         IndexRequest request = new IndexRequest("products")
                 .id(product.getId())
@@ -93,16 +105,6 @@ public class ProductService {
 
         restHighLevelClient.index(request, RequestOptions.DEFAULT);
     }
-//
-//    private ProductDocument mapToDocument(Product product) {
-//        ProductDocument doc = new ProductDocument();
-//        doc.setId(product.getId());
-//        doc.setName(product.getName());
-//        doc.setDescription(product.getDescription());
-//        doc.setCategory(product.getCategory());
-//        doc.setPrice(product.getPrice());
-//        return doc;
-//    }
 
     public Page<Product> getAll(Pageable pageable) {
         return repository.findAll(pageable);
@@ -113,28 +115,48 @@ public class ProductService {
                 .orElseThrow(() -> new ProductNotFoundException("Product not found"));
     }
 
+    public List<Product> getByIds(List<String> id) {
+        return repository.findAllById(id);
+    }
+
     public List<Product> getByCategory(String category) {
         return repository.findByCategoryAndActiveTrue(category);
     }
 
-//    public List<Product> search(String keyword) {
-//        return repository.searchByText(keyword);
-//    }
 
 
-//    public Page<Product> search(String keyword, Pageable pageable) {
-//        if (keyword == null || keyword.isEmpty()) {
-//            return repository.findAll(pageable);
-//        }
-//        return repository.searchByText(keyword, pageable);  // ✅ Correct usage
-//    }
-//
-//
-
-
-    public List<Product> search(String keyword, Pageable pageable) throws IOException {
+    public Page<Product> search(String keyword, Pageable pageable) throws IOException {
 
         SearchRequest searchRequest = new SearchRequest("products");
+
+        if(keyword.equals("featured")) {
+
+            SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
+
+            BoolQueryBuilder query = QueryBuilders.boolQuery()
+                    .must(QueryBuilders.termQuery("featured", true))
+                    .filter(QueryBuilders.rangeQuery("featureStart").lte("now"))
+                    .filter(QueryBuilders.rangeQuery("featureEnd").gte("now"));
+
+            sourceBuilder.query(query).from(pageable.getPageNumber() * pageable.getPageSize())
+                    .size(pageable.getPageSize());;
+
+            searchRequest.source(sourceBuilder);
+
+            SearchResponse response = restHighLevelClient.search(searchRequest, RequestOptions.DEFAULT);
+
+            List<Product> result = new ArrayList<>();
+
+            for (SearchHit hit : response.getHits()) {
+                Product product = objectMapper
+                        .readValue(hit.getSourceAsString(), Product.class);
+                result.add(product);
+            }
+
+            long totalHits = response.getHits().getTotalHits().value;
+
+            return new PageImpl<>(result, pageable, totalHits);
+        }
 
         SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
         sourceBuilder.query(
@@ -167,7 +189,7 @@ public class ProductService {
         // Optional: secondary sort (relevance)
       //  sourceBuilder.sort("_score", SortOrder.DESC);
 
-        sourceBuilder.sort("featured", SortOrder.DESC);
+        //sourceBuilder.sort("featured", SortOrder.DESC);
 
         searchRequest.source(sourceBuilder);
 
@@ -182,32 +204,10 @@ public class ProductService {
             result.add(product);
         }
 
-        return result;
+        long totalHits = response.getHits().getTotalHits().value;
+
+        return new PageImpl<>(result, pageable, totalHits);
     }
-
-//    public Page<ProductDocument> search(String keyword, Pageable pageable) {
-//
-//        NativeQuery query = NativeQuery.builder()
-//                .withQuery(q -> q.multiMatch(m -> m
-//                        .query(keyword)
-//                        .fields("name", "description", "category")
-//                ))
-//                .withPageable(pageable)
-//                .build();
-//
-//        SearchHits<ProductDocument> hits =
-//                elasticsearchOperations.search(query, ProductDocument.class);
-//
-//        List<ProductDocument> content = hits.stream()
-//                .map(hit -> hit.getContent()).collect(Collectors.toList());
-//
-//        return new PageImpl<>(content, pageable, hits.getTotalHits());
-//    }
-
-
-//    public List<Product> search(String keyword) {
-//        return repository.findByNameContainingIgnoreCase(keyword);
-//    }
 
     public Product update(String id, Product updated) {
         Product existing = getById(id);
@@ -252,16 +252,6 @@ public class ProductService {
         return saved;
     }
 
-    private boolean isCurrentlyFeatured(Product p) {
-
-        LocalDateTime now = LocalDateTime.now();
-
-        return p.getFeatureStart() != null
-                && p.getFeatureEnd() != null
-                && now.isAfter(p.getFeatureStart())
-                && now.isBefore(p.getFeatureEnd());
-    }
-
 
     public void updateInventory(String productId, int availableQuantity) throws IOException {
 
@@ -275,5 +265,82 @@ public class ProductService {
 
         // 🔥 also reindex for search
         indexProduct(product);
+    }
+
+    public Page<Product> searchProducts(ProductSearchRequest request) throws IOException {
+
+        SearchRequest searchRequest = new SearchRequest("products");
+        SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
+
+        BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
+
+        // 🔍 Search
+        if (request.getKeyword() != null) {
+            boolQuery.must(QueryBuilders.multiMatchQuery(
+                    request.getKeyword(),
+                    "name", "description", "category"
+            ));
+        }
+
+        // 🧠 Filters
+        if (request.getInStock() != null) {
+            boolQuery.filter(QueryBuilders.termQuery("inStock", request.getInStock()));
+        }
+
+        if (request.getBrand() != null) {
+            boolQuery.filter(QueryBuilders.termQuery("attributes.brand", request.getBrand()));
+        }
+
+        if (request.getColor() != null) {
+            boolQuery.filter(QueryBuilders.termQuery("attributes.color", request.getColor()));
+        }
+
+        if (request.getMinPrice() != null || request.getMaxPrice() != null) {
+            RangeQueryBuilder priceRange = QueryBuilders.rangeQuery("price");
+
+            if (request.getMinPrice() != null)
+                priceRange.gte(request.getMinPrice());
+
+            if (request.getMaxPrice() != null)
+                priceRange.lte(request.getMaxPrice());
+
+            boolQuery.filter(priceRange);
+        }
+
+        if (request.getMinRating() != null) {
+            boolQuery.filter(QueryBuilders.rangeQuery("attributes.rating")
+                    .gte(request.getMinRating()));
+        }
+
+        // 📊 Sorting
+        if (request.getSortBy() != null) {
+            SortOrder order = "asc".equalsIgnoreCase(request.getSortOrder())
+                    ? SortOrder.ASC : SortOrder.DESC;
+
+            sourceBuilder.sort(request.getSortBy(), order);
+        }
+
+        // 📄 Pagination
+        sourceBuilder.from(request.getPage() * request.getSize());
+        sourceBuilder.size(request.getSize());
+
+        sourceBuilder.query(boolQuery);
+        sourceBuilder.trackTotalHits(true);
+
+        searchRequest.source(sourceBuilder);
+
+        SearchResponse response =  restHighLevelClient.search(searchRequest, RequestOptions.DEFAULT);
+
+        List<Product> result = new ArrayList<>();
+
+        for (SearchHit hit : response.getHits()) {
+            Product product = objectMapper
+                    .readValue(hit.getSourceAsString(), Product.class);
+            result.add(product);
+        }
+
+        long totalHits = response.getHits().getTotalHits().value;
+
+        return new PageImpl<>(result, PageRequest.of(request.getPage(), request.getSize()), totalHits);
     }
 }

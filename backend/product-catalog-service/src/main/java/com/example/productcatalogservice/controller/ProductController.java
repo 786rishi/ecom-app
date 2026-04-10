@@ -1,5 +1,6 @@
 package com.example.productcatalogservice.controller;
 
+import com.example.productcatalogservice.dto.ProductSearchRequest;
 import com.example.productcatalogservice.model.Product;
 import com.example.productcatalogservice.service.ProductService;
 import org.springframework.data.domain.Page;
@@ -19,29 +20,35 @@ public class ProductController {
         this.service = service;
     }
 
-    // ✅ Public APIs
-
     @GetMapping
     public Page<Product> getAll(Pageable pageable) {
         return service.getAll(pageable);
     }
 
-//    @GetMapping("/search")
-//    public List<Product> search(@RequestParam String q) {
-//        return service.search(q);
-//    }
 
     @GetMapping("/search")
-    public List<Product> search(
+    public Page<Product> searchGet(
             @RequestParam("q") String q,
             Pageable pageable) throws IOException {
 
         return service.search(q, pageable);
     }
 
+    @PostMapping("/search")
+    public Page<Product> search(
+            @RequestBody ProductSearchRequest request) throws IOException {
+
+        return service.searchProducts(request);
+    }
+
     @GetMapping("/{id}")
     public Product getById(@PathVariable("id") String id) {
         return service.getById(id);
+    }
+
+    @PostMapping("/ids")
+    public List<Product> getByIds(@RequestBody List<String> productIds) {
+        return service.getByIds(productIds);
     }
 
     @GetMapping("/category/{category}")

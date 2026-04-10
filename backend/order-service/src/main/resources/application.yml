@@ -18,6 +18,12 @@ spring:
       password: admin
       driver-class-name: com.mysql.cj.jdbc.Driver
 
+    wishlist:
+      url: jdbc:mysql://localhost:3307/wishlistdb
+      username: admin
+      password: admin
+      driver-class-name: com.mysql.cj.jdbc.Driver
+
   jpa:
     hibernate:
       ddl-auto: update

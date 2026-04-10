@@ -19,29 +19,27 @@ import java.util.Map;
 
 @Configuration
 @EnableJpaRepositories(
-        basePackages = "com.example.orderservice.repository.order",
-        entityManagerFactoryRef = "orderEntityManager",
-        transactionManagerRef = "orderTransactionManager"
+        basePackages = "com.example.orderservice.repository.wishlist",
+        entityManagerFactoryRef = "wishlistEntityManager",
+        transactionManagerRef = "wishlistTransactionManager"
 )
-public class OrderDBConfig {
+public class WishlistDBConfig {
 
     @Bean
-    @ConfigurationProperties("spring.datasource.order")
-    public DataSourceProperties orderDataSourceProperties() {
+    @ConfigurationProperties("spring.datasource.wishlist")
+    public DataSourceProperties wishlistDataSourceProperties() {
         return new DataSourceProperties();
     }
 
     @Bean
-    @Primary
-    public DataSource orderDataSource() {
-        return orderDataSourceProperties()
+    public DataSource wishlistDataSource() {
+        return wishlistDataSourceProperties()
                 .initializeDataSourceBuilder()
                 .build();
     }
 
     @Bean
-    @Primary
-    public LocalContainerEntityManagerFactoryBean orderEntityManager(
+    public LocalContainerEntityManagerFactoryBean wishlistEntityManager(
             EntityManagerFactoryBuilder builder) {
 
         Map<String, Object> properties = new HashMap<>();
@@ -50,16 +48,16 @@ public class OrderDBConfig {
         properties.put("hibernate.show_sql", true);
 
         return builder
-                .dataSource(orderDataSource())
-                .packages("com.example.orderservice.entity.order")
-                .persistenceUnit("order")
+                .dataSource(wishlistDataSource())
+                .packages("com.example.orderservice.entity.wishlist")
+                .persistenceUnit("wishlist")
                 .properties(properties)
                 .build();
     }
 
     @Bean
-    public PlatformTransactionManager orderTransactionManager(
-            @Qualifier("orderEntityManager") EntityManagerFactory emf) {
+    public PlatformTransactionManager wishlistTransactionManager(
+            @Qualifier("wishlistEntityManager") EntityManagerFactory emf) {
         return new JpaTransactionManager(emf);
     }
 }

@@ -1,26 +1,34 @@
 import React, { useState, useEffect } from 'react';
-import { Carousel, Container, Row, Col, Card, Badge } from 'react-bootstrap';
+import { Carousel, Container, Row, Col, Card, Badge, Button, Toast } from 'react-bootstrap';
 import { productService, ProductResponse } from '../services/productService';
 import { Product } from '../types/product';
 import LoadingSpinner from './LoadingSpinner';
 import { useCart } from '../contexts/CartContext';
+import { useAuth } from '../contexts/AuthContext';
 import ProtectedComponent from './ProtectedComponent';
 
 interface FeaturedProductsCarouselProps {
   onProductClick?: (product: Product) => void;
   showAddToCart?: boolean;
+  showWishlist?: boolean;
   className?: string;
 }
 
 const FeaturedProductsCarousel: React.FC<FeaturedProductsCarouselProps> = ({
   onProductClick,
   showAddToCart = false,
+  showWishlist = false,
   className = ''
 }) => {
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { addToCart } = useCart();
+  const { auth } = useAuth();
+  const [showToast, setShowToast] = useState(false);
+  const [showWishlistToast, setShowWishlistToast] = useState(false);
+  const [toastProduct, setToastProduct] = useState<Product | null>(null);
+  const [wishlistLoading, setWishlistLoading] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchFeaturedProducts = async () => {
@@ -49,6 +57,40 @@ const FeaturedProductsCarousel: React.FC<FeaturedProductsCarouselProps> = ({
   const handleAddToCart = (e: React.MouseEvent, product: Product) => {
     e.stopPropagation();
     addToCart(product);
+    setToastProduct(product);
+    setShowToast(true);
+  };
+
+  const handleAddToWishlist = async (e: React.MouseEvent, product: Product) => {
+    e.stopPropagation();
+    if (!auth.isAuthenticated || !auth.user?.id) {
+      console.error('User not authenticated');
+      return;
+    }
+
+    try {
+      setWishlistLoading(product.id);
+      const response = await fetch(
+        `http://localhost:8090/order/wishlist/add?userId=${auth.user.id}&productId=${product.id}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Failed to add to wishlist: ${response.statusText}`);
+      }
+
+      setToastProduct(product);
+      setShowWishlistToast(true);
+    } catch (error) {
+      console.error('Failed to add to wishlist:', error);
+    } finally {
+      setWishlistLoading(null);
+    }
   };
 
   if (loading) {
@@ -114,12 +156,39 @@ const FeaturedProductsCarousel: React.FC<FeaturedProductsCarouselProps> = ({
                           alt={product.name}
                           style={{ height: '180px', objectFit: 'cover' }}
                         />
+                        
+                        {/* Wishlist Icon */}
+                        {showWishlist && (
+                          <ProtectedComponent>
+                            <Button
+                              variant="light"
+                              className="position-absolute top-0 end-0 m-2 rounded-circle p-2"
+                              style={{ 
+                  width: '36px', 
+                  height: '36px',
+                  zIndex: 10 // Ensure it's above the out of stock overlay
+                }}
+                              onClick={(e) => handleAddToWishlist(e, product)}
+                              disabled={wishlistLoading === product.id}
+                              title="Add to Wishlist"
+                            >
+                              {wishlistLoading === product.id ? (
+                                <div className="spinner-border spinner-border-sm" role="status">
+                                  <span className="visually-hidden">Loading...</span>
+                                </div>
+                              ) : (
+                                <span style={{ fontSize: '16px' }}>❤️</span>
+                              )}
+                            </Button>
+                          </ProtectedComponent>
+                        )}
+                        
                         {!product.inStock && (
                           <div className="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center bg-dark bg-opacity-50">
                             <Badge bg="secondary" className="fs-6">Out of Stock</Badge>
                           </div>
                         )}
-                        <div className="position-absolute top-0 end-0 m-2">
+                        <div className="position-absolute top-0 start-0 m-2">
                           <Badge bg="danger" className="featured-badge">
                             Featured
                           </Badge>
@@ -156,13 +225,15 @@ const FeaturedProductsCarousel: React.FC<FeaturedProductsCarouselProps> = ({
 
                         {showAddToCart && (
                           <ProtectedComponent>
-                            <button
-                              className="btn btn-primary btn-sm w-100 mt-auto"
+                            <Button
+                              variant="primary"
+                              size="sm"
+                              className="w-100 mt-auto"
                               disabled={!product.inStock}
                               onClick={(e) => handleAddToCart(e, product)}
                             >
                               {product.inStock ? 'Add to Cart' : 'Out of Stock'}
-                            </button>
+                            </Button>
                           </ProtectedComponent>
                         )}
                       </Card.Body>
@@ -207,6 +278,54 @@ const FeaturedProductsCarousel: React.FC<FeaturedProductsCarouselProps> = ({
           }
         }
       `}</style>
+
+      {/* Cart Toast Notification */}
+      {toastProduct && (
+        <Toast
+          onClose={() => setShowToast(false)}
+          show={showToast}
+          delay={3000}
+          autohide
+          style={{
+            position: 'fixed',
+            top: 20,
+            right: 20,
+            zIndex: 9999
+          }}
+        >
+          <Toast.Header>
+            <strong className="me-auto">Added to Cart!</strong>
+            <small>just now</small>
+          </Toast.Header>
+          <Toast.Body>
+            {toastProduct.name} has been added to your cart.
+          </Toast.Body>
+        </Toast>
+      )}
+
+      {/* Wishlist Toast Notification */}
+      {toastProduct && (
+        <Toast
+          onClose={() => setShowWishlistToast(false)}
+          show={showWishlistToast}
+          delay={3000}
+          autohide
+          style={{
+            position: 'fixed',
+            top: 80,
+            right: 20,
+            zIndex: 9999
+          }}
+        >
+          <Toast.Header>
+            <strong className="me-auto">Added to Wishlist!</strong>
+            <small>just now</small>
+          </Toast.Header>
+          <Toast.Body>
+            {toastProduct.name} has been added to your wishlist.
+          </Toast.Body>
+        </Toast>
+      )}
     </Container>
   );
 };

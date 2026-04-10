@@ -2,12 +2,14 @@ import React from 'react';
 import { ListGroup, Button, Badge, Image, Toast } from 'react-bootstrap';
 import { Product } from '../types/product';
 import { useCart } from '../contexts/CartContext';
+import { useAuth } from '../contexts/AuthContext';
 import ProtectedComponent from './ProtectedComponent';
 
 interface ProductListProps {
   products: Product[];
   onProductClick?: (product: Product) => void;
   showAddToCart?: boolean;
+  showWishlist?: boolean;
   loading?: boolean;
   className?: string;
 }
@@ -16,12 +18,16 @@ const ProductList: React.FC<ProductListProps> = ({
   products,
   onProductClick,
   showAddToCart = false,
+  showWishlist = false,
   loading = false,
   className = ''
 }) => {
   const { addToCart } = useCart();
+  const { auth } = useAuth();
   const [showToast, setShowToast] = React.useState(false);
+  const [showWishlistToast, setShowWishlistToast] = React.useState(false);
   const [toastProduct, setToastProduct] = React.useState<Product | null>(null);
+  const [wishlistLoading, setWishlistLoading] = React.useState<string | null>(null);
 
   const handleProductClick = (product: Product) => {
     if (onProductClick) {
@@ -34,6 +40,38 @@ const ProductList: React.FC<ProductListProps> = ({
     addToCart(product);
     setToastProduct(product);
     setShowToast(true);
+  };
+
+  const handleAddToWishlist = async (e: React.MouseEvent, product: Product) => {
+    e.stopPropagation();
+    if (!auth.isAuthenticated || !auth.user?.id) {
+      console.error('User not authenticated');
+      return;
+    }
+
+    try {
+      setWishlistLoading(product.id);
+      const response = await fetch(
+        `http://localhost:8090/order/wishlist/add?userId=${auth.user.id}&productId=${product.id}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Failed to add to wishlist: ${response.statusText}`);
+      }
+
+      setToastProduct(product);
+      setShowWishlistToast(true);
+    } catch (error) {
+      console.error('Failed to add to wishlist:', error);
+    } finally {
+      setWishlistLoading(null);
+    }
   };
 
   if (loading) {
@@ -125,6 +163,26 @@ const ProductList: React.FC<ProductListProps> = ({
                   {!product.inStock && (
                     <Badge bg="secondary" className="me-2">Out of Stock</Badge>
                   )}
+                  {showWishlist && (
+                    <ProtectedComponent>
+                      <Button
+                        variant="outline-danger"
+                        size="sm"
+                        className="me-2"
+                        disabled={wishlistLoading === product.id}
+                        onClick={(e) => handleAddToWishlist(e, product)}
+                        title="Add to Wishlist"
+                      >
+                        {wishlistLoading === product.id ? (
+                          <div className="spinner-border spinner-border-sm" role="status">
+                            <span className="visually-hidden">Loading...</span>
+                          </div>
+                        ) : (
+                          '❤️ Wishlist'
+                        )}
+                      </Button>
+                    </ProtectedComponent>
+                  )}
                   {showAddToCart && (
                     <ProtectedComponent>
                       <Button 
@@ -145,7 +203,7 @@ const ProductList: React.FC<ProductListProps> = ({
       ))}
     </ListGroup>
 
-    {/* Toast Notification */}
+    {/* Cart Toast Notification */}
     {toastProduct && (
       <Toast 
         onClose={() => setShowToast(false)} 
@@ -165,6 +223,30 @@ const ProductList: React.FC<ProductListProps> = ({
         </Toast.Header>
         <Toast.Body>
           {toastProduct.name} has been added to your cart.
+        </Toast.Body>
+      </Toast>
+    )}
+
+    {/* Wishlist Toast Notification */}
+    {toastProduct && (
+      <Toast 
+        onClose={() => setShowWishlistToast(false)} 
+        show={showWishlistToast} 
+        delay={3000} 
+        autohide
+        style={{
+          position: 'fixed',
+          top: 80,
+          right: 20,
+          zIndex: 9999
+        }}
+      >
+        <Toast.Header>
+          <strong className="me-auto">Added to Wishlist!</strong>
+          <small>just now</small>
+        </Toast.Header>
+        <Toast.Body>
+          {toastProduct.name} has been added to your wishlist.
         </Toast.Body>
       </Toast>
     )}

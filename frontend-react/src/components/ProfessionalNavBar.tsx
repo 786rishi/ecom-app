@@ -62,6 +62,15 @@ const ProfessionalNavBar: React.FC<ProfessionalNavBarProps> = ({
       requireAuth: true
     },
     {
+      name: 'Wishlist',
+      href: '#wishlist',
+      icon: '❤️',
+      action: () => {
+        window.location.hash = 'wishlist';
+      },
+      requireAuth: true
+    },
+    {
       name: 'Contact',
       href: '#contact',
       icon: '📞',

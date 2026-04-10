@@ -16,6 +16,7 @@ import FeaturedProductsCarousel from './components/FeaturedProductsCarousel';
 import ProductDetails from './components/ProductDetails';
 import PrivacyPolicy from './components/PrivacyPolicy';
 import OrderHistory from './components/OrderHistory';
+import Wishlist from './components/Wishlist';
 import AdvanceFilter from './components/AdvanceFilter';
 import Footer from './components/Footer';
 import { useProducts, setStateChangeCallback } from './hooks/useProducts';
@@ -26,7 +27,7 @@ import { Product } from './types/product';
 import { productService, AdvancedSearchFilters } from './services/productService';
 import './App.css';
 
-type AppState = 'main' | 'browse' | 'add-product' | 'inventory-management' | 'contact' | 'promotions' | 'product-details' | 'privacy-policy' | 'order-history';
+type AppState = 'main' | 'browse' | 'add-product' | 'inventory-management' | 'contact' | 'promotions' | 'product-details' | 'privacy-policy' | 'order-history' | 'wishlist';
 
 // Track previous render to compare
 let lastRenderProducts: any = undefined;
@@ -271,9 +272,15 @@ function AppContent() {
         setAppState('promotions');
       } else if (hash === 'OrderHistory' && auth.isAuthenticated) {
         setAppState('order-history');
+      } else if (hash === 'wishlist' && auth.isAuthenticated) {
+        setAppState('wishlist');
       } else if (hash === 'contact') {
         setAppState('contact');
       } else if (hash === 'OrderHistory' && !auth.isAuthenticated) {
+        // Redirect non-authenticated users to main
+        setAppState('main');
+        window.location.hash = '';
+      } else if (hash === 'wishlist' && !auth.isAuthenticated) {
         // Redirect non-authenticated users to main
         setAppState('main');
         window.location.hash = '';
@@ -474,6 +481,21 @@ function AppContent() {
     );
   }
 
+  // Show wishlist page
+  if (appState === 'wishlist') {
+    return (
+      <div className="App">
+        <ProfessionalNavBar
+          isGuestMode={isGuestMode}
+          onNavigateHome={handleNavigateHome}
+          setAppState={setAppState}
+        />
+        <Wishlist />
+        <Footer onNavigateHome={handleNavigateHome} setAppState={setAppState} />
+      </div>
+    );
+  }
+
   // Show products page
   if (appState === 'browse') {
     // Use filtered products if advanced filter is active, otherwise use normal products
@@ -506,6 +528,7 @@ function AppContent() {
         <FeaturedProductsCarousel
           onProductClick={handleProductClick}
           showAddToCart={auth.isAuthenticated}
+          showWishlist={auth.isAuthenticated}
         />
 
         <Container fluid className="py-4">
@@ -547,6 +570,7 @@ function AppContent() {
                   products={displayProducts || []}
                   onProductClick={handleProductClick}
                   showAddToCart={auth.isAuthenticated}
+                  showWishlist={auth.isAuthenticated}
                   loading={isLoading}
                   className="mb-4"
                   columns={{
@@ -560,6 +584,7 @@ function AppContent() {
                   products={displayProducts || []}
                   onProductClick={handleProductClick}
                   showAddToCart={auth.isAuthenticated}
+                  showWishlist={auth.isAuthenticated}
                   loading={isLoading}
                   className="mb-4"
                 />

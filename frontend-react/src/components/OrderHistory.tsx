@@ -68,9 +68,9 @@ const OrderHistory: React.FC = () => {
       setSuccessMessage(null);
       
       const response = await fetch(
-        `http://localhost:8090/order/orders/return/${orderId}/${auth.user.id}`,
+        `http://localhost:8090/order/orders/${orderId}/return`,
         {
-          method: 'POST',
+          method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
           },
@@ -167,6 +167,7 @@ const OrderHistory: React.FC = () => {
                   <span className={`badge ${
                     order.status === 'PAID' ? 'bg-success' : 
                     order.status === 'PAYMENT_PENDING' ? 'bg-warning' : 
+                    order.status === 'RETURNED' ? 'bg-danger' :
                     'bg-secondary'
                   }`}>
                     {order.status}
@@ -179,10 +180,10 @@ const OrderHistory: React.FC = () => {
                     variant="danger"
                     size="sm"
                     onClick={() => handleReturnOrder(order.id)}
-                    disabled={!isWithinLast7Days(order.createdAt) || returningOrderId === order.id}
+                    disabled={!isWithinLast7Days(order.createdAt) || returningOrderId === order.id || order.status === 'RETURNED'}
                     style={{
-                      opacity: isWithinLast7Days(order.createdAt) ? 1 : 0.5,
-                      cursor: isWithinLast7Days(order.createdAt) ? 'pointer' : 'not-allowed'
+                      opacity: isWithinLast7Days(order.createdAt) && order.status !== 'RETURNED' ? 1 : 0.5,
+                      cursor: isWithinLast7Days(order.createdAt) && order.status !== 'RETURNED' ? 'pointer' : 'not-allowed'
                     }}
                   >
                     {returningOrderId === order.id ? (
@@ -198,12 +199,17 @@ const OrderHistory: React.FC = () => {
                         Returning...
                       </>
                     ) : (
-                      'Return'
+                      order.status === 'RETURNED' ? 'Returned' : 'Return'
                     )}
                   </Button>
                   {!isWithinLast7Days(order.createdAt) && (
                     <small className="text-muted d-block mt-1">
                       Returns not available after 7 days
+                    </small>
+                  )}
+                  {order.status === 'RETURNED' && (
+                    <small className="text-muted d-block mt-1">
+                      Order has been returned
                     </small>
                   )}
                 </td>

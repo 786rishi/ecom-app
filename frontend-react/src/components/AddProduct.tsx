@@ -160,18 +160,7 @@ const SearchableDropdown: React.FC<{
 const AddProduct: React.FC = () => {
   const { auth } = useAuth();
   
-  // Check if user is admin
-  if (!auth.isAuthenticated || !auth.user?.roles?.includes('admin')) {
-    return (
-      <Container className="py-5">
-        <Alert variant="danger">
-          <Alert.Heading>Access Denied</Alert.Heading>
-          <p>You need admin privileges to access this page.</p>
-        </Alert>
-      </Container>
-    );
-  }
-
+  // Initialize all hooks before any early returns
   const [formData, setFormData] = useState<ProductFormData>({
     name: '',
     description: '',
@@ -191,6 +180,18 @@ const AddProduct: React.FC = () => {
   const [showError, setShowError] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [loading, setLoading] = useState(false);
+  
+  // Check if user is admin
+  if (!auth.isAuthenticated || !auth.user?.roles?.includes('admin')) {
+    return (
+      <Container className="py-5">
+        <Alert variant="danger">
+          <Alert.Heading>Access Denied</Alert.Heading>
+          <p>You need admin privileges to access this page.</p>
+        </Alert>
+      </Container>
+    );
+  }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;

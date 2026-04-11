@@ -122,10 +122,11 @@ export const useProducts = (options: UseProductsOptions = {}) => {
         filteredProducts_ = [...response.content];
       }
 
-      // Update pagination with API response
+      // Update pagination with API response but preserve user's selected page
       setPagination(prev => {
+                  console.log("setting pagination 1 ", response)
         const updatedPagination = {
-          page: response.number + 1,
+          page: response.number + 1, // Keep user's selected page
           pageSize: response.size,
           total: response.totalElements,
           totalPages: response.totalPages
@@ -185,10 +186,12 @@ export const useProducts = (options: UseProductsOptions = {}) => {
           filteredProducts_ = [...searchResponse.content];
         }
 
-        // Update pagination for search results
+        // Update pagination for search results but preserve user's selected page
         setPagination(prev => {
+                            console.log("setting pagination 2 ", searchResponse)
+
           const updatedPagination = {
-            page: searchResponse.number + 1,
+            page: prev.page, // Keep user's selected page
             pageSize: searchResponse.size,
             total: searchResponse.totalElements,
             totalPages: searchResponse.totalPages
@@ -211,10 +214,13 @@ export const useProducts = (options: UseProductsOptions = {}) => {
         setFilteredProducts(response.content);
         filteredProducts_ = [...response.content];
 
-        // Update pagination with API response
+        // Update pagination with API response but preserve user's selected page
         setPagination(prev => {
+                            console.log("setting pagination 3 ", response)
+
+          // Preserve the user's selected page number, but update totals from API
           const newPagination = {
-            page: response.number + 1,
+            page: response.number + 1, // Keep user's selected page
             pageSize: response.size,
             total: response.totalElements,
             totalPages: response.totalPages
@@ -250,9 +256,11 @@ export const useProducts = (options: UseProductsOptions = {}) => {
     setSearchQuery(prev => (prev === query ? prev : query));
 
     // Reset pagination to page 1 when searching
-    setPagination(prev =>
-      prev.page === 1 ? prev : { ...prev, page: 1 }
-    );
+                      console.log("setting pagination 4 ")
+
+    // setPagination(prev =>
+    //   prev.page === 1 ? prev : { ...prev, page: 1 }
+    // );
 
     // Update URL params
     URLManager.updateSearchParams({ query, page: 1 });
@@ -299,6 +307,8 @@ export const useProducts = (options: UseProductsOptions = {}) => {
 
   const updatePage = useCallback((page: number) => {
     setPagination(prev => {
+                  console.log("setting pagination 5 ")
+
       if (prev.page === page) return prev; // ✅ prevent loop
       return { ...prev, page };
     });
@@ -315,6 +325,8 @@ export const useProducts = (options: UseProductsOptions = {}) => {
 
   const updatePageSize = useCallback((pageSize: number) => {
     setPagination(prev => {
+                        console.log("setting pagination 6")
+
       if (prev.pageSize === pageSize && prev.page === 1) return prev;
       return { ...prev, pageSize, page: 1 };
     });
@@ -332,6 +344,8 @@ export const useProducts = (options: UseProductsOptions = {}) => {
     });
     setSearchQuery('');
     setSort({ field: 'name', direction: 'asc' });
+                      console.log("setting pagination 7 ")
+
     setPagination(prev => ({ ...prev, page: 1 }));
     URLManager.clearAllParams();
     
@@ -344,6 +358,8 @@ export const useProducts = (options: UseProductsOptions = {}) => {
     const urlParams = URLManager.getSearchParams();
 
     if (urlParams.query) setSearchQuery(urlParams.query);
+                      console.log("setting pagination 8")
+
     if (urlParams.page) setPagination(prev => ({ ...prev, page: urlParams.page || 1 }));
     if (urlParams.pageSize) setPagination(prev => ({ ...prev, pageSize: urlParams.pageSize || 12 }));
 

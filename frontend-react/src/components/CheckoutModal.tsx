@@ -99,7 +99,6 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ show, onHide }) => {
       // Step 1: Checkout
       const checkoutResult = await orderService.checkout(auth.user.id);
       
-      console.log('Checkout response:', checkoutResult);
       
       if (!checkoutResult.success) {
         throw new Error(checkoutResult.message || 'Checkout failed');
@@ -107,7 +106,6 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ show, onHide }) => {
 
       // Handle both string and number order ID formats
       const orderId = checkoutResult.orderId || checkoutResult.id?.toString();
-      console.log('Extracted order ID:', orderId);
       
       if (!orderId) {
         console.error('Checkout response structure:', JSON.stringify(checkoutResult, null, 2));

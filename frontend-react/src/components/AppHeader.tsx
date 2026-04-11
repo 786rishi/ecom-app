@@ -46,7 +46,6 @@ const AppHeader: React.FC<AppHeaderProps> = ({
     if (onSearch) {
       onSearch(query);
     } else {
-      console.log("updateSearchQuery from handleSearch App Header: ", query)
       updateSearchQuery(query);
     }
   };

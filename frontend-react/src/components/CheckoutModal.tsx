@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
-import { Modal, Button, Form, Alert, Row, Col } from 'react-bootstrap';
+import { Modal, Button, Form, Alert, Row, Col, Badge } from 'react-bootstrap';
 import { useCart } from '../contexts/CartContext';
 import { CartItem } from '../contexts/CartContext';
+import { useAuth } from '../contexts/AuthContext';
+import { orderService } from '../services/orderService';
 
 interface CheckoutModalProps {
   show: boolean;
@@ -10,8 +12,16 @@ interface CheckoutModalProps {
 
 const CheckoutModal: React.FC<CheckoutModalProps> = ({ show, onHide }) => {
   const { cart, clearCart } = useCart();
+  const { auth } = useAuth();
   const [isProcessing, setIsProcessing] = useState(false);
   const [orderComplete, setOrderComplete] = useState(false);
+  const [promotionCode, setPromotionCode] = useState('');
+  const [originalAmount, setOriginalAmount] = useState<number | null>(null);
+  const [discount, setDiscount] = useState<number | null>(null);
+  const [finalAmount, setFinalAmount] = useState<number | null>(null);
+  const [appliedPromotions, setAppliedPromotions] = useState<string[]>([]);
+  const [promotionApplied, setPromotionApplied] = useState(false);
+  const [promotionError, setPromotionError] = useState('');
   const [formData, setFormData] = useState({
     email: '',
     firstName: '',
@@ -32,15 +42,99 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ show, onHide }) => {
     }));
   };
 
+  const handlePromotionApply = async () => {
+    if (!promotionCode.trim()) {
+      setPromotionError('Please enter a promotion code');
+      return;
+    }
+
+    if (!auth.isAuthenticated || !auth.user?.id) {
+      setPromotionError('User must be authenticated to apply promotions');
+      return;
+    }
+
+    setIsProcessing(true);
+    setPromotionError('');
+
+    try {
+      const result = await orderService.applyPromotion(
+        auth.user.id,
+        cart.total,
+        cart.items,
+        promotionCode
+      );
+
+      if (result.success) {
+        setOriginalAmount(result.originalAmount || cart.total);
+        setDiscount(result.discount || 0);
+        setFinalAmount(result.finalAmount || cart.total);
+        setAppliedPromotions(result.appliedPromotions || []);
+        setPromotionApplied(true);
+        setPromotionError('');
+      } else {
+        setPromotionError(result.message || 'Failed to apply promotion');
+      }
+    } catch (error) {
+      setPromotionError('Error applying promotion');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const getCurrentTotal = () => {
+    return finalAmount !== null ? finalAmount : cart.total;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!auth.isAuthenticated || !auth.user?.id) {
+      alert('User must be authenticated to checkout');
+      return;
+    }
+
     setIsProcessing(true);
 
     try {
-      // Simulate payment processing
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Step 1: Checkout
+      const checkoutResult = await orderService.checkout(auth.user.id);
       
-      // Simulate order success
+      console.log('Checkout response:', checkoutResult);
+      
+      if (!checkoutResult.success) {
+        throw new Error(checkoutResult.message || 'Checkout failed');
+      }
+
+      // Handle both string and number order ID formats
+      const orderId = checkoutResult.orderId || checkoutResult.id?.toString();
+      console.log('Extracted order ID:', orderId);
+      
+      if (!orderId) {
+        console.error('Checkout response structure:', JSON.stringify(checkoutResult, null, 2));
+        throw new Error('No order ID returned from checkout');
+      }
+
+      // Step 2: Payment
+      const paymentResult = await orderService.makePayment(orderId, auth.user.id);
+      
+      if (!paymentResult.success) {
+        throw new Error(paymentResult.message || 'Payment failed');
+      }
+
+      // Step 3: Confirm inventory for each item
+      const inventoryPromises = cart.items.map(item => 
+        orderService.confirmInventory(item.product.id, item.quantity)
+      );
+
+      try {
+        await Promise.all(inventoryPromises);
+        console.log('All inventory confirmations completed successfully');
+      } catch (error) {
+        console.error('Inventory confirmation failed:', error);
+        // Continue with order even if inventory confirmation fails
+      }
+
+      // Order successful
       setOrderComplete(true);
       
       // Clear cart after successful order
@@ -50,6 +144,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ show, onHide }) => {
       }, 3000);
     } catch (error) {
       console.error('Checkout error:', error);
+      alert(error instanceof Error ? error.message : 'Checkout failed. Please try again.');
     } finally {
       setIsProcessing(false);
     }
@@ -57,6 +152,13 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ show, onHide }) => {
 
   const handleClose = () => {
     setOrderComplete(false);
+    setPromotionCode('');
+    setOriginalAmount(null);
+    setDiscount(null);
+    setFinalAmount(null);
+    setAppliedPromotions([]);
+    setPromotionApplied(false);
+    setPromotionError('');
     setFormData({
       email: '',
       firstName: '',
@@ -86,7 +188,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ show, onHide }) => {
             Your order has been successfully processed and will be delivered soon.
           </p>
           <p className="small text-muted">
-            Order total: <strong>${cart.total.toFixed(2)}</strong>
+            Order total: <strong>${getCurrentTotal().toFixed(2)}</strong>
           </p>
         </Modal.Body>
         <Modal.Footer>
@@ -124,10 +226,83 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ show, onHide }) => {
                     </div>
                   ))}
                   <hr />
-                  <div className="d-flex justify-content-between fw-bold">
-                    <span>Total:</span>
-                    <span>${cart.total.toFixed(2)}</span>
+                  
+                  {/* Promotion Code Section */}
+                  <div className="mb-3">
+                    <Form.Group className="mb-2">
+                      <Form.Label className="small fw-semibold">Promotion Code</Form.Label>
+                      <div className="d-flex gap-2">
+                        <Form.Control
+                          type="text"
+                          placeholder="Enter promo code"
+                          value={promotionCode}
+                          onChange={(e) => setPromotionCode(e.target.value)}
+                          disabled={promotionApplied}
+                          size="sm"
+                        />
+                        <Button
+                          variant="outline-primary"
+                          size="sm"
+                          onClick={handlePromotionApply}
+                          disabled={promotionApplied || isProcessing || !promotionCode.trim()}
+                        >
+                          {promotionApplied ? 'Applied' : 'Apply'}
+                        </Button>
+                      </div>
+                      {promotionError && (
+                        <Form.Text className="text-danger small">
+                          {promotionError}
+                        </Form.Text>
+                      )}
+                      {promotionApplied && discount !== null && discount > 0 && (
+                        <Form.Text className="text-success small">
+                          Promotion applied! You saved ${discount.toFixed(2)}
+                        </Form.Text>
+                      )}
+                    </Form.Group>
                   </div>
+                  
+                  {promotionApplied && originalAmount !== null ? (
+                    <>
+                      <div className="d-flex justify-content-between">
+                        <span>Subtotal:</span>
+                        <span>${originalAmount.toFixed(2)}</span>
+                      </div>
+                      {discount !== null && discount > 0 && (
+                        <div className="d-flex justify-content-between text-success">
+                          <span>Discount:</span>
+                          <span>-${discount.toFixed(2)}</span>
+                        </div>
+                      )}
+                      {appliedPromotions.length > 0 && (
+                        <div className="mb-2">
+                          <small className="text-muted">Applied Promotions:</small>
+                          <div className="d-flex flex-wrap gap-1">
+                            {appliedPromotions.map((promo, index) => (
+                              <Badge key={index} bg="info" className="small">
+                                {promo}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      <div className="d-flex justify-content-between fw-bold">
+                        <span>Total:</span>
+                        <span>${getCurrentTotal().toFixed(2)}</span>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="d-flex justify-content-between">
+                        <span>Subtotal:</span>
+                        <span>${cart.total.toFixed(2)}</span>
+                      </div>
+                      <div className="d-flex justify-content-between fw-bold">
+                        <span>Total:</span>
+                        <span>${getCurrentTotal().toFixed(2)}</span>
+                      </div>
+                    </>
+                  )}
                 </div>
               </Col>
               
@@ -269,7 +444,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ show, onHide }) => {
                 type="submit" 
                 disabled={isProcessing}
               >
-                {isProcessing ? 'Processing...' : `Pay $${cart.total.toFixed(2)}`}
+                {isProcessing ? 'Processing...' : `Pay $${getCurrentTotal().toFixed(2)}`}
               </Button>
             </div>
           </Form>

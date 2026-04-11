@@ -5,17 +5,18 @@ import { useAuth } from '../contexts/AuthContext';
 interface LandingPageProps {
   onLogin: () => void;
   onBrowseAsGuest: () => void;
+  onAuthenticated?: () => void;
 }
 
-const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onBrowseAsGuest }) => {
+const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onBrowseAsGuest, onAuthenticated }) => {
   const { auth } = useAuth();
 
   // If user is already logged in, redirect to products immediately
   React.useEffect(() => {
     if (auth.isAuthenticated) {
-      onBrowseAsGuest();
+      onAuthenticated?.();
     }
-  }, [auth.isAuthenticated, onBrowseAsGuest]);
+  }, [auth.isAuthenticated, onAuthenticated]);
 
   // Don't render anything if redirecting
   if (auth.isAuthenticated) {
@@ -59,7 +60,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onBrowseAsGuest }) =
             <p className="text-muted">Experience the best in online shopping</p>
           </Col>
         </Row>
-        
+
         <Row>
           <Col md={4} className="mb-4">
             <Card className="h-100 border-0 shadow-sm">
@@ -72,7 +73,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onBrowseAsGuest }) =
               </Card.Body>
             </Card>
           </Col>
-          
+
           <Col md={4} className="mb-4">
             <Card className="h-100 border-0 shadow-sm">
               <Card.Body className="text-center p-4">
@@ -84,7 +85,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onBrowseAsGuest }) =
               </Card.Body>
             </Card>
           </Col>
-          
+
           <Col md={4} className="mb-4">
             <Card className="h-100 border-0 shadow-sm">
               <Card.Body className="text-center p-4">
@@ -107,7 +108,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onBrowseAsGuest }) =
             <p className="text-muted">Different options for different needs</p>
           </Col>
         </Row>
-        
+
         <Row>
           <Col md={6} className="mb-4">
             <Card className="h-100 border-0 shadow">
@@ -128,7 +129,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onBrowseAsGuest }) =
               </Card.Body>
             </Card>
           </Col>
-          
+
           <Col md={6} className="mb-4">
             <Card className="h-100 border-0 shadow">
               <Card.Body className="p-4">

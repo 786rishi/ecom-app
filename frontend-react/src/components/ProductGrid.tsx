@@ -7,6 +7,7 @@ interface ProductGridProps {
   products: Product[];
   onProductClick?: (product: Product) => void;
   showAddToCart?: boolean;
+  showWishlist?: boolean;
   loading?: boolean;
   columns?: {
     xs?: number;
@@ -23,6 +24,7 @@ const ProductGrid: React.FC<ProductGridProps> = ({
   products,
   onProductClick,
   showAddToCart = false,
+  showWishlist = false,
   loading = false,
   columns = {
     xs: 1,
@@ -61,12 +63,13 @@ const ProductGrid: React.FC<ProductGridProps> = ({
 
   return (
     <Row className={`product-grid ${className}`}>
-      {products.map((product) => (
-        <Col key={product.id} {...columns}>
+      {products.map((product, index) => (
+        <Col key={product.id || `product-${index}`} {...columns}>
           <ProductCard
             product={product}
             onProductClick={onProductClick}
             showAddToCart={showAddToCart}
+            showWishlist={showWishlist}
             className="h-100 mb-4"
           />
         </Col>

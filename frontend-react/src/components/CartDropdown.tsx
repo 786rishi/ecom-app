@@ -18,6 +18,7 @@ const CartDropdown: React.FC<CartDropdownProps> = ({ onCheckout }) => {
     updateQuantity(productId, newQuantity);
   };
 
+
   if (cart.items.length === 0) {
     return (
       <Dropdown align="end">

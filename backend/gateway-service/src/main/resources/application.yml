@@ -25,13 +25,27 @@ spring:
           filters:
             - StripPrefix=1
 
-#        - id: inventory-service
-#          uri: http://inventory-service:8085
-#          predicates:
-#            - Path=/inventory/**
-#          filters:
-#            - StripPrefix=1
-#
+        - id: inventory-service
+          uri: http://localhost:8085
+          predicates:
+            - Path=/inventory/**
+          filters:
+            - StripPrefix=1
+
+        - id: promotion-service
+          uri: http://localhost:8089
+          predicates:
+            - Path=/promotions/**
+          filters:
+            - StripPrefix=1
+
+        - id: order-service
+          uri: http://localhost:8082
+          predicates:
+            - Path=/order/**
+          filters:
+            - StripPrefix=1
+
 #        - id: user-service
 #          uri: http://user-service:8081
 #          predicates:

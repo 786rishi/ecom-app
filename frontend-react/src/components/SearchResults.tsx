@@ -22,6 +22,7 @@ const SearchResults: React.FC<SearchResultsProps> = ({
   onSuggestionClick,
   className = ''
 }) => {
+  console.log("allProducts::", allProducts, products);
   const suggestions = getSearchSuggestions(allProducts, query);
 
   if (loading) {

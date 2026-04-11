@@ -13,6 +13,11 @@ export interface Product {
   reviews?: number;
   createdAt: string;
   updatedAt: string;
+  active?: boolean;
+  featured?: boolean;
+  featureStart?: string;
+  featureEnd?: string;
+  availableQuantity?: number;
 }
 
 export interface ProductAttribute {

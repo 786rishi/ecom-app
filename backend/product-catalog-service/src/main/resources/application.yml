@@ -4,3 +4,19 @@ server:
 spring:
   application:
     name: product-catalog-service
+
+  data:
+    mongodb:
+      uri: mongodb://admin:admin@localhost:27017/productdb?authSource=admin
+      auto-index-creation: true
+    opensearch:
+      index: products
+
+  elasticsearch:
+    uris: http://localhost:9200
+
+
+aws:
+  region: ap-east-1
+  s3:
+    bucket: product-images

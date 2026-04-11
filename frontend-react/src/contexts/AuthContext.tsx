@@ -1,9 +1,15 @@
-import React, { createContext, useContext, useReducer, ReactNode } from 'react';
+import React, { createContext, useContext, useReducer, ReactNode, useEffect } from 'react';
+import Keycloak, { KeycloakInstance, KeycloakProfile } from "keycloak-js";
+import keycloak from '../services/keycloak';
 
 interface User {
   id: string;
   email: string;
   name: string;
+  preferredUsername?: string;
+  givenName?: string;
+  familyName?: string;
+  roles?: string[];
 }
 
 interface AuthState {
@@ -11,49 +17,81 @@ interface AuthState {
   isAuthenticated: boolean;
   loading: boolean;
   error: string | null;
+  keycloak: KeycloakInstance | null;
 }
 
 type AuthAction =
   | { type: 'LOGIN_START' }
-  | { type: 'LOGIN_SUCCESS'; payload: User }
+  | { type: 'LOGIN_SUCCESS'; payload: { user: User; keycloak: KeycloakInstance } }
   | { type: 'LOGIN_FAILURE'; payload: string }
   | { type: 'LOGOUT' }
-  | { type: 'CLEAR_ERROR' };
+  | { type: 'CLEAR_ERROR' }
+  | { type: 'INIT_KEYCLOAK_START' }
+  | { type: 'INIT_KEYCLOAK_SUCCESS'; payload: KeycloakInstance }
+  | { type: 'INIT_KEYCLOAK_FAILURE'; payload: string };
 
 const initialState: AuthState = {
   user: null,
   isAuthenticated: false,
-  loading: false,
-  error: null
+  loading: true,
+  error: null,
+  keycloak: null
 };
 
 const authReducer = (state: AuthState, action: AuthAction): AuthState => {
+
+
   switch (action.type) {
+    case 'INIT_KEYCLOAK_START':
+      return {
+        ...state,
+        loading: true,
+        error: null
+      };
+
+    case 'INIT_KEYCLOAK_SUCCESS':
+      return {
+        ...state,
+        keycloak: action.payload,
+        loading: false,
+        error: null
+      };
+
+    case 'INIT_KEYCLOAK_FAILURE':
+      return {
+        ...state,
+        keycloak: null,
+        loading: false,
+        error: action.payload
+      };
+
     case 'LOGIN_START':
       return {
         ...state,
         loading: true,
         error: null
       };
-    
+
     case 'LOGIN_SUCCESS':
+
       return {
         ...state,
-        user: action.payload,
+        user: (action as any).payload.user,
+        keycloak: (action as any).payload.keycloak,
         isAuthenticated: true,
         loading: false,
         error: null
       };
-    
+
     case 'LOGIN_FAILURE':
       return {
         ...state,
         user: null,
         isAuthenticated: false,
         loading: false,
-        error: action.payload
+        error: (action as any).payload
       };
-    
+
     case 'LOGOUT':
       return {
         ...state,
@@ -62,13 +100,13 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
         loading: false,
         error: null
       };
-    
+
     case 'CLEAR_ERROR':
       return {
         ...state,
         error: null
       };
-    
+
     default:
       return state;
   }
@@ -76,9 +114,10 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
 
 interface AuthContextType {
   auth: AuthState;
-  login: (email: string, password: string) => Promise<void>;
-  logout: () => void;
+  login: () => Promise<void>;
+  logout: () => Promise<void>;
   clearError: () => void;
+  keycloakLogin: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -86,64 +125,198 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [auth, dispatch] = useReducer(authReducer, initialState);
 
-  const login = async (email: string, password: string) => {
-    dispatch({ type: 'LOGIN_START' });
-    
-    try {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Mock authentication logic
-      if (email === 'test@gmail.com' && password === 'admin') {
-        const user: User = {
-          id: '1',
-          email: 'test@gmail.com',
-          name: 'Test User'
+
+
+  // Initialize Keycloak
+  useEffect(() => {
+    const initKeycloak = async () => {
+      try {
+
+        if ((keycloak as any).__initialized) return;
+
+
+
+
+        dispatch({ type: 'INIT_KEYCLOAK_START' });
+
+        // const authenticated = await keycloak.init({
+        //   onLoad: "check-sso",
+        //   silentCheckSsoRedirectUri: window.location.origin + "/silent-check-sso.html",
+        //   pkceMethod: "S256",
+        //   checkLoginIframe: false,
+        //   enableLogging: process.env.NODE_ENV === "development",
+        //   redirectUri: window.location.origin
+        // } as any);
+
+        const authenticated = await keycloak.init({
+          onLoad: "check-sso",
+          pkceMethod: "S256",
+          checkLoginIframe: false,
+        } as any);
+
+        (keycloak as any).__initialized = true;
+
+
+
+        if (authenticated && keycloak.token) {
+
+
+          try {
+            window.history.replaceState({}, document.title, window.location.pathname);
+
+            const userProfile: any = await keycloak.loadUserProfile();
+            //await loadUserProfile();          
+            const user: User = {
+              id: userProfile.id || keycloak.subject || '',
+              email: userProfile.email || '',
+              name: userProfile.firstName && userProfile.lastName
+                ? `${userProfile.firstName} ${userProfile.lastName}`
+                : userProfile.username || '',
+              preferredUsername: userProfile.username,
+              givenName: userProfile.firstName,
+              familyName: userProfile.lastName,
+              roles: keycloak.tokenParsed?.realm_access?.roles || []
+            };
+
+
+
+            dispatch({
+              type: 'LOGIN_SUCCESS',
+              payload: { user, keycloak }
+            });
+
+
+
+            // Trigger success event
+            window.dispatchEvent(new CustomEvent('loginSuccess'));
+          } catch (error) {
+
+            dispatch({
+              type: 'LOGIN_FAILURE',
+              payload: 'Failed to load user profile'
+            });
+          }
+        } else {
+          dispatch({
+            type: 'INIT_KEYCLOAK_SUCCESS',
+            payload: keycloak
+          });
+        }
+
+        // Set up token refresh
+        // keycloak.onTokenExpired = () => {
+        //   (keycloak.updateToken(30) as any).then((refreshed: boolean) => {
+        //     if (refreshed) {
+        //       console.log('Token refreshed');
+        //     } else {
+        //       console.log('Token not refreshed, valid for ' + Math.round(keycloak.tokenParsed!.exp! - (new Date().getTime() / 1000)) + ' seconds');
+        //     }
+        //   }).catch(() => {
+        //     console.error('Failed to refresh token');
+        //     dispatch({ type: 'LOGOUT' });
+        //   });
+        // };
+
+        keycloak.onTokenExpired = async () => {
+          try {
+            const refreshed = await keycloak.updateToken(30);
+
+            if (refreshed) {
+
+            } else {
+
+            }
+          } catch (err) {
+
+            dispatch({ type: "LOGOUT" });
+          }
         };
-        
-        dispatch({ type: 'LOGIN_SUCCESS', payload: user });
-        
-        // Store in localStorage for persistence
-        localStorage.setItem('user', JSON.stringify(user));
-        
-        // Trigger redirect to products page
-        window.dispatchEvent(new CustomEvent('loginSuccess'));
-      } else {
-        dispatch({ type: 'LOGIN_FAILURE', payload: 'Invalid email or password' });
+
+        // Set up auth event listeners
+        keycloak.onAuthSuccess = () => {
+
+        };
+
+        keycloak.onAuthError = (error) => {
+
+          dispatch({ type: 'LOGIN_FAILURE', payload: 'Authentication failed' });
+        };
+
+        keycloak.onAuthLogout = () => {
+
+          dispatch({ type: 'LOGOUT' });
+        };
+
+      } catch (error) {
+
+        dispatch({
+          type: 'INIT_KEYCLOAK_FAILURE',
+          payload: 'Failed to initialize authentication'
+        });
       }
+    };
+
+    initKeycloak();
+  }, []);
+
+  const loadUserProfile = (): Promise<KeycloakProfile> => {
+    return new Promise((resolve, reject) => {
+      keycloak.loadUserProfile()
+        .success(resolve)
+        .error(reject);
+    });
+  };
+
+  const login = async () => {
+    if (!auth.keycloak) {
+      dispatch({ type: 'LOGIN_FAILURE', payload: 'Keycloak not initialized' });
+      return;
+    }
+
+    try {
+      dispatch({ type: 'LOGIN_START' });
+
+      await auth.keycloak.login({
+        redirectUri: window.location.origin
+      });
+
     } catch (error) {
-      dispatch({ type: 'LOGIN_FAILURE', payload: 'Login failed. Please try again.' });
+
+      dispatch({ type: 'LOGIN_FAILURE', payload: 'Login failed' });
     }
   };
 
-  const logout = () => {
-    dispatch({ type: 'LOGOUT' });
-    localStorage.removeItem('user');
+  const keycloakLogin = async () => {
+    await login();
+  };
+
+  const logout = async () => {
+    if (auth.keycloak) {
+      try {
+        await auth.keycloak.logout({
+          redirectUri: window.location.origin
+        });
+      } catch (error) {
+
+        // Force logout even if Keycloak logout fails
+        dispatch({ type: 'LOGOUT' });
+      }
+    } else {
+      dispatch({ type: 'LOGOUT' });
+    }
   };
 
   const clearError = () => {
     dispatch({ type: 'CLEAR_ERROR' });
   };
 
-  // Check for existing session on mount
-  React.useEffect(() => {
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      try {
-        const user = JSON.parse(storedUser);
-        dispatch({ type: 'LOGIN_SUCCESS', payload: user });
-      } catch (error) {
-        localStorage.removeItem('user');
-      }
-    }
-  }, []);
-
   return (
     <AuthContext.Provider value={{
       auth,
       login,
       logout,
-      clearError
+      clearError,
+      keycloakLogin
     }}>
       {children}
     </AuthContext.Provider>

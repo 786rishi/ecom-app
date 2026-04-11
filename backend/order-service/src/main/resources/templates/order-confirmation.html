@@ -1,0 +1,41 @@
+<html>
+<body style="font-family: Arial, sans-serif; line-height: 1.6;">
+
+<p>Dear Customer,</p>
+
+<p>
+    Thank you for shopping with <b>Mcart Store</b>.
+    We are pleased to inform you that your order has been successfully placed.
+</p>
+
+<h3>Order Details:</h3>
+<p><b>Order ID:</b> [[${orderId}]]</p>
+<p><b>Total Amount:</b> ₹[[${amount}]]</p>
+
+<h3>Items:</h3>
+<ul>
+    <li th:each="item : ${items}">
+        [[${item.productId}]] x [[${item.quantity}]]
+    </li>
+</ul>
+
+<p>
+    Your order is currently being processed. We will notify you once it has been shipped.
+</p>
+
+<p>
+    If you have any questions or need assistance, please feel free to contact us.
+</p>
+
+<br/>
+
+<p>
+    Warm regards,<br/>
+    <b>Mcart Store</b><br/>
+    Contact Details: +91-9876543210
+</p>
+
+<p><i>Happy Shopping!</i></p>
+
+</body>
+</html>

@@ -4,14 +4,17 @@ package com.example.orderservice;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
+import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-@SpringBootApplication
+@SpringBootApplication(exclude = {DataSourceAutoConfiguration.class})
 @RestController
-public class Application {
+@EnableFeignClients
+public class OrderApplication {
     public static void main(String[] args) {
-        SpringApplication.run(Application.class, args);
+        SpringApplication.run(OrderApplication.class, args);
     }
 
     @Value("${spring.application.name}")

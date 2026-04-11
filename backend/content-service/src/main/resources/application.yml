@@ -4,3 +4,9 @@ server:
 spring:
   application:
     name: content-service
+
+
+  data:
+    mongodb:
+      uri: mongodb://admin:admin@localhost:27017/cmsdb?authSource=admin
+      auto-index-creation: true

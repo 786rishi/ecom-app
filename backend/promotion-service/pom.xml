@@ -1,0 +1,45 @@
+
+<project>
+<modelVersion>4.0.0</modelVersion>
+<parent>
+    <groupId>com.example</groupId>
+    <artifactId>microservices-parent</artifactId>
+    <version>1.0.0</version>
+</parent>
+
+<artifactId>promotion-service</artifactId>
+
+<dependencies>
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-web</artifactId>
+    </dependency>
+
+        <!-- Web -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-webflux</artifactId>
+        </dependency>
+
+        <!-- MongoDB -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-mongodb</artifactId>
+        </dependency>
+
+
+</dependencies>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>14</source>
+                    <target>14</target>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>

@@ -3,6 +3,7 @@ package com.example.orderservice.controller;
 import com.example.orderservice.dto.CheckoutRequest;
 import com.example.orderservice.entity.order.Order;
 import com.example.orderservice.service.OrderService;
+import jakarta.mail.MessagingException;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -28,13 +29,18 @@ public class OrderController {
     }
 
     @PostMapping("/{id}/pay")
-    public Order pay(@PathVariable("id") Long id) {
+    public Order pay(@PathVariable("id") Long id) throws MessagingException {
         return service.processPayment(id);
     }
 
     @PostMapping("/{id}/confirm")
-    public Order confirm(@PathVariable("id") Long id) {
+    public Order confirm(@PathVariable("id") Long id) throws MessagingException {
         return service.confirmOrder(id);
+    }
+
+    @PutMapping("/{id}/return")
+    public Order returnOrder(@PathVariable("id") Long id) {
+        return service.returnOrder(id);
     }
 
 }

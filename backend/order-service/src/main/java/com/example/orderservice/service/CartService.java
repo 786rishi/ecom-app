@@ -49,5 +49,6 @@ public class CartService {
     public void clearCart(String userId) {
         Cart cart = getCart(userId);
         repository.deleteById(cart.getId());
+        repository.flush();
     }
 }

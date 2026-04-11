@@ -7,6 +7,7 @@ import com.example.orderservice.entity.cart.CartItem;
 import com.example.orderservice.entity.order.Order;
 import com.example.orderservice.entity.order.OrderItem;
 import com.example.orderservice.repository.order.OrderRepository;
+import jakarta.mail.MessagingException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,13 +22,16 @@ public class OrderService {
     private final PaymentService paymentService;
     private final InventoryClient inventoryClient;
     private final OrderRepository repository;
+    private final EmailService emailService;
+
 
     public OrderService(CartService cartService, PaymentService paymentService, InventoryClient inventoryClient,
-                        OrderRepository orderRepository) {
+                        OrderRepository orderRepository, EmailService emailService) {
         this.cartService = cartService;
         this.paymentService = paymentService;
         this.inventoryClient = inventoryClient;
         this.repository = orderRepository;
+        this.emailService = emailService;
     }
 
     @Transactional("orderTransactionManager")
@@ -41,7 +45,10 @@ public class OrderService {
 
         // Reserve inventory
         for (CartItem item : cart.getItems()) {
-            inventoryClient.reserve(item.getProductId(), item.getQuantity());
+            if(item.getProductId() != null) {
+                inventoryClient.reserve(item.getProductId(), item.getQuantity());
+
+            }
         }
 
         Order order = new Order();
@@ -71,7 +78,7 @@ public class OrderService {
 
 
     @Transactional("orderTransactionManager")
-    public Order processPayment(Long orderId) {
+    public Order processPayment(Long orderId) throws MessagingException {
 
         Order order = repository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("Order not found"));
@@ -90,15 +97,22 @@ public class OrderService {
         }
 
         order.setPaymentId(payment.getTransactionId());
-        order.setStatus("PAID");
+        //order.setStatus("PAID");
+
+        for (OrderItem item : order.getItems()) {
+            inventoryClient.confirm(item.getProductId(), item.getQuantity());
+        }
+
+        order.setStatus("CONFIRMED");
 
         cartService.clearCart(order.getUserId());
+        emailService.sendOrderConfirmationEmail("786rishisaini@gmail.com", order);
 
         return repository.save(order);
     }
 
     @Transactional("orderTransactionManager")
-    public Order confirmOrder(Long orderId) {
+    public Order confirmOrder(Long orderId) throws MessagingException {
 
         Order order = repository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("Order not found"));
@@ -111,6 +125,25 @@ public class OrderService {
 
         // clear cart
         cartService.clearCart(order.getUserId());
+
+        Order _order = repository.save(order);
+
+        emailService.sendOrderConfirmationEmail("786rishisaini@gmail.com", _order);
+
+        return _order;
+    }
+
+    @Transactional("orderTransactionManager")
+    public Order returnOrder(Long orderId) {
+
+        Order order = repository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Order not found"));
+
+        for (OrderItem item : order.getItems()) {
+            inventoryClient.add(item.getProductId(), item.getQuantity());
+        }
+
+        order.setStatus("RETURNED");
 
         return repository.save(order);
     }

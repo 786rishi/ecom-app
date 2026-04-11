@@ -15,4 +15,8 @@ public interface InventoryClient {
 
     @PostMapping("/inventory/release")
     void release(@RequestParam("productId") String productId, @RequestParam("quantity") int quantity);
+
+    @PostMapping("/inventory/add")
+    void add(@RequestParam("productId") String productId, @RequestParam("quantity") int quantity);
+
 }

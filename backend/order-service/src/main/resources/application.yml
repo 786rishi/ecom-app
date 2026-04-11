@@ -34,3 +34,16 @@ management:
     web:
       exposure:
         include: health
+
+
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: rishi.nihal.singh@gmail.com
+    password: esmodbcttsuathlt
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true

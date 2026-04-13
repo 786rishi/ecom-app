@@ -31,9 +31,7 @@ public class UserController {
             Authentication auth) {
 
         String userId = ((Jwt) auth.getPrincipal()).getSubject();
-
         request.setId(userId);
-
         return service.createOrUpdate(request);
     }
 }

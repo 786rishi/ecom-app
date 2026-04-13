@@ -23,7 +23,7 @@ public class KeycloakRoleConverter implements Converter<Jwt, AbstractAuthenticat
 
         List<SimpleGrantedAuthority> authorities = new ArrayList<>();
 
-        // 🔥 1. Extract REALM roles (optional) 
+        // 🔥 1. Extract REALM roles (optional)
         Map<String, Object> realmAccess = jwt.getClaim("realm_access");
         if (realmAccess != null && realmAccess.get("roles") != null) {
             List<String> roles = (List<String>) realmAccess.get("roles");

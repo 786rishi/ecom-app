@@ -25,9 +25,10 @@ spring:
       ddl-auto: update
     show-sql: true
 
-  redis:
-    host: ${SPRING_DATA_REDIS_HOST}
-    port: ${SPRING_DATA_REDIS_PORT}
+  data:
+    redis:
+      host: ${SPRING_DATA_REDIS_HOST}
+      port: ${SPRING_DATA_REDIS_PORT}
 
   management:
     health:

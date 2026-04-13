@@ -13,19 +13,16 @@ public class PromotionAdminService {
 
     private final PromotionRepository repository;
 
-    // CREATE
     public Promotion createPromotion(Promotion request) {
 
 
         return repository.save(request);
     }
 
-    // GET ALL
     public List<Promotion> getAllPromotions() {
         return repository.findAll();
     }
 
-    // UPDATE
     public Promotion updatePromotion(String id, Promotion request) {
 
         Promotion existing = repository.findById(id)

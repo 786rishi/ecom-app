@@ -56,19 +56,42 @@ public class ProductService {
         Product saved = repository.save(product);
 
         // 🔥 sync to ES
-        indexProduct(product);
+        indexProduct(saved);
 
         inventoryClient.add(saved.getId(), product.getAvailableQuantity());
 
         return saved;
     }
 
+    public List<Product> loadProducts(List<Product> products) {
+
+        products.forEach(product -> {
+            product.setCreatedAt(LocalDateTime.now());
+            product.setUpdatedAt(LocalDateTime.now());
+            product.setActive(true);
+        });
+
+        List<Product> saved = repository.saveAll(products);
+
+        // 🔥 sync to ES
+        saved.forEach(product -> {
+            try {
+                indexProduct(product);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            inventoryClient.add(product.getId(), product.getAvailableQuantity());
+        });
+
+        return saved;
+    }
+
+
     public void indexProduct(Product product) throws IOException {
-
-
         Map<String, Object> jsonMap = new HashMap<>();
 
         jsonMap.put("name", product.getName());
+        jsonMap.put("id", product.getId());
         jsonMap.put("description", product.getDescription());
         jsonMap.put("category", product.getCategory());
 

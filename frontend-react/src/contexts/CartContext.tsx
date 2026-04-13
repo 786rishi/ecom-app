@@ -113,7 +113,7 @@ interface CartContextType {
   addToCart: (product: Product) => Promise<void>;
   removeFromCart: (productId: string) => void;
   updateQuantity: (productId: string, quantity: number) => void;
-  clearCart: () => void;
+  clearCart: () => Promise<void>;
   loadCart: () => Promise<void>;
 }
 
@@ -158,7 +158,28 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     dispatch({ type: 'UPDATE_QUANTITY', payload: { productId, quantity } });
   };
 
-  const clearCart = () => {
+  const clearCart = async () => {
+    // First make API call if user is authenticated
+    if (auth.isAuthenticated && auth.user?.id) {
+      try {
+        const result = await orderService.clearCart(auth.user.id);
+        
+        if (result.success) {
+          // Show success message
+          alert('Cart is cleared');
+        } else {
+          console.error('Failed to clear cart on backend:', result.message);
+          alert('Failed to clear cart: ' + result.message);
+          return;
+        }
+      } catch (error) {
+        console.error('Error clearing cart:', error);
+        alert('Error clearing cart');
+        return;
+      }
+    }
+    
+    // Then clear local state
     dispatch({ type: 'CLEAR_CART' });
   };
 

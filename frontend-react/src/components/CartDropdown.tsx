@@ -18,6 +18,10 @@ const CartDropdown: React.FC<CartDropdownProps> = ({ onCheckout }) => {
     updateQuantity(productId, newQuantity);
   };
 
+  const handleClearCart = async () => {
+    await clearCart();
+  };
+
 
   if (cart.items.length === 0) {
     return (
@@ -108,7 +112,7 @@ const CartDropdown: React.FC<CartDropdownProps> = ({ onCheckout }) => {
               <Button 
                 variant="outline-secondary" 
                 size="sm"
-                onClick={clearCart}
+                onClick={handleClearCart}
               >
                 Clear Cart
               </Button>

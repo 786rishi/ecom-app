@@ -7,9 +7,18 @@ spring:
     name: inventory-service
 
   datasource:
-    url: jdbc:mysql://localhost:3307/inventorydb
-    username: admin
-    password: admin
+    url: ${MYSQL_URI}/inventorydb
+    username: ${MYSQL_USERNAME}
+    password: ${MYSQL_PASSWORD}
+    hikari:
+      minimum-idle: 2
+      maximum-pool-size: 10
+      idle-timeout: 30000        # 30 sec
+      max-lifetime: 120000       # 2 min (IMPORTANT)
+      connection-timeout: 30000
+      validation-timeout: 5000
+      keepalive-time: 30000
+      connection-test-query: SELECT 1
 
   jpa:
     hibernate:
@@ -17,5 +26,5 @@ spring:
     show-sql: true
 
   redis:
-    host: localhost
-    port: 6379
+    host: ${REDIS_HOST}
+    port: ${REDIS_PORT}

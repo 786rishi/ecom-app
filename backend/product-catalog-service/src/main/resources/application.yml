@@ -7,13 +7,21 @@ spring:
 
   data:
     mongodb:
-      uri: mongodb://admin:admin@localhost:27017/productdb?authSource=admin
+      uri: ${MONGODB_URI}/productdb?authSource=admin
       auto-index-creation: true
     opensearch:
       index: products
 
   elasticsearch:
-    uris: http://localhost:9200
+    uris: ${ELASTIC_SEARCH_URI}
+
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVER}
+    consumer:
+      group-id: inventory-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
 
 
 aws:

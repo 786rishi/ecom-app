@@ -8,5 +8,5 @@ spring:
 
   data:
     mongodb:
-      uri: mongodb://admin:admin@localhost:27017/promodb?authSource=admin
+      uri: ${MONGODB_URI}/promodb?authSource=admin
       auto-index-creation: true

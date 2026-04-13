@@ -45,7 +45,7 @@ public class InventoryService {
 
         Inventory saved = repository.save(inventory);
         // 🔥 SYNC TO PRODUCT SERVICE
-        productClient.updateInventory(productId, saved.getAvailableQuantity());
+        //productClient.updateInventory(productId, saved.getAvailableQuantity());
         return saved;
     }
 

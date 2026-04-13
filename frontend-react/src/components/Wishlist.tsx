@@ -5,6 +5,8 @@ import { useCart } from '../contexts/CartContext';
 import { Product, ProductAttribute } from '../types/product';
 import Footer from './Footer';
 
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
+
 interface WishlistResponse {
   userId: string;
   products: Product[];
@@ -37,7 +39,7 @@ const Wishlist: React.FC = () => {
 
     try {
       setLoading(true);
-      const response = await fetch(`http://localhost:8090/order/wishlist/${auth.user.id}`);
+      const response = await fetch(`${API_BASE_URL}/order/wishlist/${auth.user.id}`);
       
       if (!response.ok) {
         throw new Error(`Failed to fetch wishlist: ${response.statusText}`);
@@ -110,7 +112,7 @@ const Wishlist: React.FC = () => {
     }
 
     const response = await fetch(
-      `http://localhost:8090/order/wishlist/remove?userId=${auth.user.id}&productId=${productId}`,
+      `${API_BASE_URL}/order/wishlist/remove?userId=${auth.user.id}&productId=${productId}`,
       {
         method: 'DELETE'
       }

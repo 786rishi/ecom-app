@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Container, Table, Button, Alert, Spinner } from 'react-bootstrap';
 import { useAuth } from '../contexts/AuthContext';
 
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
+
 interface Order {
   id: number;
   userId: string;
@@ -31,7 +33,7 @@ const OrderHistory: React.FC = () => {
       setLoading(true);
       setError(null);
       
-      const response = await fetch(`http://localhost:8090/order/orders/${auth.user.id}`);
+      const response = await fetch(`${API_BASE_URL}/order/orders/${auth.user.id}`);
       
       if (!response.ok) {
         throw new Error(`Failed to fetch orders: ${response.statusText}`);
@@ -68,7 +70,7 @@ const OrderHistory: React.FC = () => {
       setSuccessMessage(null);
       
       const response = await fetch(
-        `http://localhost:8090/order/orders/${orderId}/return`,
+        `${API_BASE_URL}/order/orders/${orderId}/return`,
         {
           method: 'PUT',
           headers: {

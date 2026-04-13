@@ -7,6 +7,8 @@ import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
 import ProtectedComponent from './ProtectedComponent';
 
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
+
 interface FeaturedProductsCarouselProps {
   onProductClick?: (product: Product) => void;
   showAddToCart?: boolean;
@@ -71,7 +73,7 @@ const FeaturedProductsCarousel: React.FC<FeaturedProductsCarouselProps> = ({
     try {
       setWishlistLoading(product.id);
       const response = await fetch(
-        `http://localhost:8090/order/wishlist/add?userId=${auth.user.id}&productId=${product.id}`,
+        `${API_BASE_URL}/order/wishlist/add?userId=${auth.user.id}&productId=${product.id}`,
         {
           method: 'POST',
           headers: {

@@ -62,8 +62,6 @@ function AppContent() {
   const hookReturn = useProducts();
   const { products, allProducts, loading, error, searchQuery, pagination, updatePage, updatePageSize, clearFilters, stateVersion } = hookReturn;
 
-  console.log("updated products::", hookReturn);
-
 
   // Check if products array reference changed
   const productsChanged = lastRenderProducts !== products;
@@ -127,7 +125,6 @@ function AppContent() {
 
   const handleCategorySelect = async (category: string) => {
     try {
-      console.log("category selected: ", category)
       // Make sure we're in browse state
       if (appState !== 'browse') {
         setAppState('browse');
@@ -242,7 +239,6 @@ function AppContent() {
     }
     
     // Use hook's updateSearchQuery function directly - let the hook handle loading
-    console.log("updateSearchQuery from handleSearch: ", query)
     const { updateSearchQuery } = hookReturn;
     updateSearchQuery(query);
   };

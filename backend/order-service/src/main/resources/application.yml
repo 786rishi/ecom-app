@@ -7,21 +7,21 @@ spring:
 
   datasource:
     cart:
-      url: jdbc:mysql://localhost:3307/cartdb
-      username: admin
-      password: admin
+      url: ${MYSQL_URI}/cartdb
+      username: ${MYSQL_USERNAME}
+      password: ${MYSQL_PASSWORD}
       driver-class-name: com.mysql.cj.jdbc.Driver
 
     order:
-      url: jdbc:mysql://localhost:3307/orderdb
-      username: admin
-      password: admin
+      url: ${MYSQL_URI}/orderdb
+      username: ${MYSQL_USERNAME}
+      password: ${MYSQL_PASSWORD}
       driver-class-name: com.mysql.cj.jdbc.Driver
 
     wishlist:
-      url: jdbc:mysql://localhost:3307/wishlistdb
-      username: admin
-      password: admin
+      url: ${MYSQL_URI}/wishlistdb
+      username: ${MYSQL_USERNAME}
+      password: ${MYSQL_PASSWORD}
       driver-class-name: com.mysql.cj.jdbc.Driver
 
   jpa:
@@ -37,10 +37,10 @@ management:
 
 
   mail:
-    host: smtp.gmail.com
-    port: 587
-    username: rishi.nihal.singh@gmail.com
-    password: esmodbcttsuathlt
+    host: ${SMTP_HOST}
+    port: ${SMTP_PORT}
+    username: ${SMTP_USERNAME}
+    password: ${SMTP_PASSWORD}
     properties:
       mail:
         smtp:

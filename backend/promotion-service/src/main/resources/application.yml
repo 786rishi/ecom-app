@@ -5,7 +5,6 @@ spring:
   application:
     name: promo-service
 
-
   data:
     mongodb:
       uri: ${MONGODB_URI}/promodb?authSource=admin

@@ -10,7 +10,7 @@ public class BogoPromotionRule implements PromotionRule {
 
     @Override
     public boolean isApplicable(CartRequest cart, Promotion promo) {
-        return true; // Simplified
+        return true;
     }
 
     @Override

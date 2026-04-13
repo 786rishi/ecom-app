@@ -14,7 +14,6 @@ spring:
 
   elasticsearch:
     uris: ${ELASTIC_SEARCH_URI}
-    
 
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVER}

@@ -56,16 +56,14 @@ public class ProductController {
         return service.getByCategory(category);
     }
 
-//    @GetMapping("/search")
-//    public List<Product> search(@RequestParam String q) {
-//        return service.search(q);
-//    }
-
-    // Admin APIs
-
     @PostMapping
     public Product create(@RequestBody Product product) throws IOException {
         return service.create(product);
+    }
+
+    @PostMapping("/bulk")
+    public List<Product> loadProducts(@RequestBody List<Product> product) throws IOException {
+        return service.loadProducts(product);
     }
 
     @PutMapping("/{id}")

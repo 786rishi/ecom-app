@@ -243,6 +243,37 @@ class OrderService {
     }
   }
 
+  async clearCart(userId: string): Promise<OrderResponse> {
+    try {
+      const response = await fetch(`http://localhost:8090/order/cart/clear?userId=${encodeURIComponent(userId)}`, {
+        method: 'DELETE',
+        headers: this.getAuthHeaders()
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      let data = {};
+      try {
+        data = await response.json();
+      } catch (e) {
+        // Response is empty, which is expected for DELETE operations
+      }
+      return {
+        success: true,
+        message: 'Cart cleared successfully',
+        ...data
+      };
+    } catch (error) {
+      console.error('Error clearing cart:', error);
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : 'Failed to clear cart'
+      };
+    }
+  }
+
   async confirmInventory(productId: string, quantity: number): Promise<OrderResponse> {
     try {
       const response = await fetch(`${API_BASE_URL}/inventory/inventory/confirm?productId=${encodeURIComponent(productId)}&quantity=${quantity}`, {

@@ -2,6 +2,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Container, Form, Button, Alert, Row, Col, Card, Dropdown, InputGroup } from 'react-bootstrap';
 import { useAuth } from '../contexts/AuthContext';
 
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
+
 interface ProductFormData {
   name: string;
   description: string;
@@ -263,7 +265,7 @@ const AddProduct: React.FC = () => {
         images: formData.images.filter(img => img.trim() !== '')
       };
 
-      const response = await fetch('http://localhost:8090/products/products', {
+      const response = await fetch(`${API_BASE_URL}/products/products`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -1,5 +1,9 @@
 import { Product } from '../types/product';
 
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8091';
+console.log('API_BASE_URL from env:', process.env.REACT_APP_API_BASE_URL);
+console.log('Final API_BASE_URL:', API_BASE_URL);
+
 export interface ProductResponse {
   content: Product[];
   pageable: {
@@ -65,7 +69,7 @@ export const productService = {
       if (params.sortBy) searchParams.append('sortBy', params.sortBy);
       if (params.sortOrder) searchParams.append('sortOrder', params.sortOrder);
 
-      const response = await fetch(`http://localhost:8090/products/products?${searchParams.toString()}`, {
+      const response = await fetch(`${API_BASE_URL}/products/products?${searchParams.toString()}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -93,7 +97,7 @@ export const productService = {
       searchParams.append('page', page.toString());
       searchParams.append('size', size.toString());
 
-      const response = await fetch(`http://localhost:8090/products/products/search?${searchParams.toString()}`, {
+      const response = await fetch(`${API_BASE_URL}/products/products/search?${searchParams.toString()}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -121,7 +125,7 @@ export const productService = {
 
   async getProductById(id: string): Promise<Product> {
     try {
-      const response = await fetch(`http://localhost:8090/products/products/${id}`, {
+      const response = await fetch(`${API_BASE_URL}/products/products/${id}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -192,7 +196,7 @@ export const productService = {
       requestBody.page = filters.page !== undefined ? filters.page : 0;
       requestBody.size = filters.size !== undefined ? filters.size : 10;
 
-      const response = await fetch('http://localhost:8090/products/products/search', {
+      const response = await fetch(`${API_BASE_URL}/products/products/search`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -213,7 +217,7 @@ export const productService = {
 
   async getCategories(): Promise<string[]> {
     try {
-      const response = await fetch('http://localhost:8090/products/categories', {
+      const response = await fetch(`${API_BASE_URL}/products/categories`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',

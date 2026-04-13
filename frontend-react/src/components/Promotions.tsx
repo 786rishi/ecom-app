@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Container, Table, Button, Alert, Spinner, Form, Badge, Modal } from 'react-bootstrap';
 import { useAuth } from '../contexts/AuthContext';
 
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
+
 interface Promotion {
   id: string;
   name: string;
@@ -56,7 +58,7 @@ const Promotions: React.FC = () => {
       setLoading(true);
       setError(null);
       
-      const response = await fetch('http://localhost:8090/promotions/admin/promotions', {
+      const response = await fetch(`${API_BASE_URL}/promotions/admin/promotions`, {
         headers: {
           'Authorization': `Bearer ${auth.keycloak?.token}`,
           'Content-Type': 'application/json'
@@ -106,7 +108,7 @@ const Promotions: React.FC = () => {
       const updatedPromotion = editingPromotion[promotionId];
       if (!updatedPromotion) return;
 
-      const response = await fetch(`http://localhost:8089/promotions/admin/promotions/${promotionId}/status?active=${updatedPromotion.active}`, {
+      const response = await fetch(`${API_BASE_URL}/promotions/admin/promotions/${promotionId}/status?active=${updatedPromotion.active}`, {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${auth.keycloak?.token}`,
@@ -217,7 +219,7 @@ const Promotions: React.FC = () => {
         promotionData.conditions = newPromotion.conditions || { buy: 0, get: 0 };
       }
 
-      const response = await fetch('http://localhost:8090/promotions/admin/promotions', {
+      const response = await fetch(`${API_BASE_URL}/promotions/admin/promotions`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${auth.keycloak?.token}`,

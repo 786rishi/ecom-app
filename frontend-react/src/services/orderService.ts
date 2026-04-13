@@ -68,7 +68,7 @@ export interface OrderResponse {
   status?: string;
 }
 
-const API_BASE_URL = 'http://localhost:8090';
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
 
 class OrderService {
   private getAuthHeaders() {
@@ -245,7 +245,7 @@ class OrderService {
 
   async clearCart(userId: string): Promise<OrderResponse> {
     try {
-      const response = await fetch(`http://localhost:8090/order/cart/clear?userId=${encodeURIComponent(userId)}`, {
+      const response = await fetch(`${API_BASE_URL}/order/cart/clear?userId=${encodeURIComponent(userId)}`, {
         method: 'DELETE',
         headers: this.getAuthHeaders()
       });

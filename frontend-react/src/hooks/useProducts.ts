@@ -266,7 +266,6 @@ export const useProducts = (options: UseProductsOptions = {}) => {
     URLManager.updateSearchParams({ query, page: 1 });
 
     // Trigger debounced search
-    debugger
     debouncedSearch(query);
   }, []); // Remove debouncedSearch dependency
 

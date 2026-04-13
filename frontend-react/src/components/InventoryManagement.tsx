@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Container, Table, Button, Alert, Spinner, Form } from 'react-bootstrap';
 import { useAuth } from '../contexts/AuthContext';
 
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
+
 interface InventoryItem {
   id: number;
   productId: string;
@@ -60,7 +62,7 @@ const InventoryManagement: React.FC = () => {
       setLoading(true);
       setError(null);
       
-      const response = await fetch('http://localhost:8090/inventory/inventory', {
+      const response = await fetch(`${API_BASE_URL}/inventory/inventory`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -84,7 +86,7 @@ const InventoryManagement: React.FC = () => {
   const updateInventory = async (productId: string, quantity: number) => {
     try {
       const response = await fetch(
-        `http://localhost:8090/inventory/inventory/add?productId=${productId}&quantity=${quantity}`,
+        `${API_BASE_URL}/inventory/inventory/add?productId=${productId}&quantity=${quantity}`,
         {
           method: 'POST',
           headers: {

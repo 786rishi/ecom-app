@@ -47,6 +47,14 @@ jobs:
             SERVICES="$SERVICES content-service"
           fi
 
+          if echo "$CHANGED_FILES" | grep -q "backend/promotion-service/"; then
+            SERVICES="$SERVICES promotion-service"
+          fi
+
+          if echo "$CHANGED_FILES" | grep -q "backend/user-service/"; then
+            SERVICES="$SERVICES user-service"
+          fi
+
           echo "services=$SERVICES" >> $GITHUB_OUTPUT
 
   deploy:

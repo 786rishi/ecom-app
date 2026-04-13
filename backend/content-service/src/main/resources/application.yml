@@ -8,5 +8,5 @@ spring:
 
   data:
     mongodb:
-      uri: mongodb://admin:admin@localhost:27017/cmsdb?authSource=admin
+      uri: ${MONGODB_URI}/cmsdb?authSource=admin
       auto-index-creation: true

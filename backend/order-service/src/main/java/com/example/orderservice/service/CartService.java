@@ -20,7 +20,7 @@ public class CartService {
 
     @Transactional("cartTransactionManager")
     public Cart getCart(String userId) {
-        return repository.findByUserId(userId)
+        return repository.findFirstByUserId(userId)
                 .orElseThrow(() -> new RuntimeException("Cart not found"));
     }
 
@@ -29,7 +29,7 @@ public class CartService {
     @Transactional("cartTransactionManager")
     public Cart addItem(String userId, CartItem item) {
 
-        Cart cart = repository.findByUserId(userId)
+        Cart cart = repository.findFirstByUserId(userId)
                 .orElse(new Cart());
 
         cart.setUserId(userId);
@@ -47,7 +47,7 @@ public class CartService {
 
     @Transactional("cartTransactionManager")
     public void clearCart(String userId) {
-        Cart cart = getCart(userId);
+        Cart cart = repository.findFirstByUserId(userId).orElseThrow(() -> new RuntimeException("No Cart"));
         repository.deleteById(cart.getId());
         repository.flush();
     }

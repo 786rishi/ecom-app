@@ -41,7 +41,6 @@ export interface CartItemResponse {
     price: number;
     category: string;
     inStock: boolean;
-    images?: string[];
   };
 }
 

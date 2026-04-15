@@ -67,8 +67,7 @@ const Wishlist: React.FC = () => {
           ...product,
           attributes: convertedAttributes,
           brand: product.brand || 'Unknown',
-          image: product.image || product.images?.[0] || '/placeholder-image.jpg',
-          images: product.images || (product.image ? [product.image] : [])
+          image: product.image || '/placeholder-image.jpg'
         };
       });
       setWishlistItems(convertedProducts);
@@ -201,7 +200,7 @@ const Wishlist: React.FC = () => {
                   <tr key={product.id}>
                     <td>
                       <Image
-                        src={product.images?.[0] || '/placeholder-image.jpg'}
+                        src={product.image || '/placeholder-image.jpg'}
                         alt={product.name}
                         rounded
                         style={{

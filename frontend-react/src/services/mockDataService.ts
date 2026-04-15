@@ -9,10 +9,6 @@ export const mockProducts: Product[] = [
     category: 'Electronics',
     brand: 'AudioTech',
     image: 'https://picsum.photos/seed/headphones1/400/300.jpg',
-    images: [
-      'https://picsum.photos/seed/headphones1/400/300.jpg',
-      'https://picsum.photos/seed/headphones2/400/300.jpg'
-    ],
     attributes: [
       { name: 'color', value: 'Black', type: 'color' },
       { name: 'size', value: 'Standard', type: 'size' },

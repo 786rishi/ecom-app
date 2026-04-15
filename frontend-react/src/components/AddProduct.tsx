@@ -16,7 +16,7 @@ interface ProductFormData {
   availableQuantity: string;
   inStock: boolean;
   attributes: { [key: string]: string };
-  images: string[];
+  image: string;
 }
 
 // Fixed categories list
@@ -175,7 +175,7 @@ const AddProduct: React.FC = () => {
     availableQuantity: '0',
     inStock: true,
     attributes: {},
-    images: ['']
+    image: ''
   });
 
   const [showSuccess, setShowSuccess] = useState(false);
@@ -222,26 +222,13 @@ const AddProduct: React.FC = () => {
     }));
   };
 
-  const handleImageChange = (index: number, value: string) => {
+  const handleImageChange = (value: string) => {
     setFormData(prev => ({
       ...prev,
-      images: prev.images.map((img, i) => i === index ? value : img)
+      image: value
     }));
   };
 
-  const addImageField = () => {
-    setFormData(prev => ({
-      ...prev,
-      images: [...prev.images, '']
-    }));
-  };
-
-  const removeImageField = (index: number) => {
-    setFormData(prev => ({
-      ...prev,
-      images: prev.images.filter((_, i) => i !== index)
-    }));
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -262,7 +249,7 @@ const AddProduct: React.FC = () => {
         availableQuantity: parseInt(formData.availableQuantity),
         inStock: formData.inStock,
         attributes: formData.attributes,
-        images: formData.images.filter(img => img.trim() !== '')
+        image: formData.image
       };
 
       const response = await fetch(`${API_BASE_URL}/products/products`, {
@@ -292,7 +279,7 @@ const AddProduct: React.FC = () => {
         availableQuantity: '0',
         inStock: true,
         attributes: {},
-        images: ['']
+        image: ''
       });
 
       // Hide success message after 3 seconds
@@ -486,37 +473,13 @@ const AddProduct: React.FC = () => {
             </Form.Group>
 
             <Form.Group className="mb-3">
-              <Form.Label>Product Images</Form.Label>
-              {formData.images.map((image, index) => (
-                <Row key={index} className="mb-2">
-                  <Col md={10}>
-                    <Form.Control
-                      type="url"
-                      placeholder="https://example.com/image.jpg"
-                      value={image}
-                      onChange={(e) => handleImageChange(index, e.target.value)}
-                    />
-                  </Col>
-                  <Col md={2}>
-                    {formData.images.length > 1 && (
-                      <Button
-                        variant="danger"
-                        size="sm"
-                        onClick={() => removeImageField(index)}
-                      >
-                        Remove
-                      </Button>
-                    )}
-                  </Col>
-                </Row>
-              ))}
-              <Button
-                variant="outline-primary"
-                size="sm"
-                onClick={addImageField}
-              >
-                Add Another Image
-              </Button>
+              <Form.Label>Product Image</Form.Label>
+              <Form.Control
+                type="url"
+                placeholder="https://example.com/image.jpg"
+                value={formData.image}
+                onChange={(e) => handleImageChange(e.target.value)}
+              />
             </Form.Group>
 
             <Button

@@ -79,7 +79,7 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
       const quantityDiff = quantity - existingItem.quantity;
       const updatedItems = state.items.map(item =>
         item.product.id === productId
-          ? { ...item, quantity }
+          ? { ...item, quantity, product: { ...item.product, images: undefined } }
           : item
       );
       
@@ -200,8 +200,19 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             description: item.product?.description || '',
             price: item.price,
             category: item.product?.category || 'Unknown',
+            brand: item.product?.brand || 'Unknown',
+            image: item.product?.image || '/placeholder-image.jpg',
+            attributes: item.product?.attributes || [],
             inStock: item.product?.inStock ?? true,
-            images: item.product?.images || []
+            rating: item.product?.rating,
+            reviews: item.product?.reviews,
+            createdAt: item.product?.createdAt || new Date().toISOString(),
+            updatedAt: item.product?.updatedAt || new Date().toISOString(),
+            active: item.product?.active,
+            featured: item.product?.featured,
+            featureStart: item.product?.featureStart,
+            featureEnd: item.product?.featureEnd,
+            availableQuantity: item.product?.availableQuantity
           },
           quantity: item.quantity
         }));

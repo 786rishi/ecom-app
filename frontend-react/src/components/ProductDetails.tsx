@@ -18,7 +18,6 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({
   const { addToCart } = useCart();
   const [showToast, setShowToast] = useState(false);
   const [imageZoom, setImageZoom] = useState(1);
-  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [imagePosition, setImagePosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
@@ -37,12 +36,6 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({
   };
 
   const handleResetZoom = () => {
-    setImageZoom(1);
-    setImagePosition({ x: 0, y: 0 });
-  };
-
-  const handleImageSelect = (index: number) => {
-    setSelectedImageIndex(index);
     setImageZoom(1);
     setImagePosition({ x: 0, y: 0 });
   };
@@ -80,7 +73,7 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({
     setIsDragging(false);
   };
 
-  const currentImage = product.images?.[selectedImageIndex] || product.image;
+  const currentImage = product.image;
 
   return (
     <>
@@ -147,27 +140,6 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({
                 </div>
               </div>
 
-              {/* Thumbnail Images */}
-              {product.images && product.images.length > 1 && (
-                <div className="thumbnail-container d-flex gap-2 overflow-auto">
-                  {product.images.map((image, index) => (
-                    <div
-                      key={index}
-                      className={`thumbnail-item border rounded p-1 cursor-pointer ${
-                        selectedImageIndex === index ? 'border-primary border-2' : ''
-                      }`}
-                      onClick={() => handleImageSelect(index)}
-                      style={{ minWidth: '80px', height: '80px' }}
-                    >
-                      <img
-                        src={image}
-                        alt={`${product.name} ${index + 1}`}
-                        className="img-fluid h-100 w-100 object-fit-cover"
-                      />
-                    </div>
-                  ))}
-                </div>
-              )}
             </div>
           </Col>
 

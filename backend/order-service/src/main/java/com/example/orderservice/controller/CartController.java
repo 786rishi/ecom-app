@@ -3,7 +3,6 @@ package com.example.orderservice.controller;
 import com.example.orderservice.entity.cart.Cart;
 import com.example.orderservice.entity.cart.CartItem;
 import com.example.orderservice.service.CartService;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController

@@ -10,6 +10,7 @@ import SearchResults from './components/SearchResults';
 import LandingPage from './components/LandingPage';
 
 const KEYCLOAK_BASE_URL = process.env.REACT_APP_KEYCLOAK_BASE_URL || 'http://localhost:8080';
+const REACT_APP_BASE_URL = process.env.REACT_APP_BASE_URL || 'http://localhost:3000';
 import AddProduct from './components/AddProduct';
 import InventoryManagement from './components/InventoryManagement';
 import Contact from './components/Contact';
@@ -44,7 +45,7 @@ function AppContent() {
   const [, setForceRender] = useState(0); // Component-level state to trigger re-renders
   const { isGuestMode, setIsGuestMode } = useGuestMode();
   const { auth } = useAuth();
-  
+
   // Advanced filter state
   const [showAdvancedFilter, setShowAdvancedFilter] = useState(false);
   const [currentFilters, setCurrentFilters] = useState<AdvancedSearchFilters>({});
@@ -88,7 +89,7 @@ function AppContent() {
   }, [auth.isAuthenticated, appState, setAppState, setIsGuestMode]);
 
   const handleLogin = () => {
-    window.open(`${KEYCLOAK_BASE_URL}/realms/master/protocol/openid-connect/auth?client_id=fb-login&redirect_uri=http%3A%2F%2Flocalhost%3A3000&state=f7d4b3fd-5ec0-4f51-ac5f-273aeeba1696&response_mode=query&response_type=code&scope=openid&nonce=81ad7d0a-b7ed-4705-8f73-ed4682143379&code_challenge=Z57CRwqdPDpdWKKqnyL8OxnqO0JGV1R3pTjB55qiKMQ&code_challenge_method=S256`, '_self');
+    window.open(`${KEYCLOAK_BASE_URL}/realms/master/protocol/openid-connect/auth?client_id=fb-login&redirect_uri=http%3A%2F%2F${REACT_APP_BASE_URL}&state=f7d4b3fd-5ec0-4f51-ac5f-273aeeba1696&response_mode=query&response_type=code&scope=openid&nonce=81ad7d0a-b7ed-4705-8f73-ed4682143379&code_challenge=Z57CRwqdPDpdWKKqnyL8OxnqO0JGV1R3pTjB55qiKMQ&code_challenge_method=S256`, '_self');
   };
 
   const handleBrowseAsGuest = () => {
@@ -131,20 +132,20 @@ function AppContent() {
       if (appState !== 'browse') {
         setAppState('browse');
       }
-      
+
       // Use advanced search API with category as keyword
       setFilterLoading(true);
       setCurrentFilters({ keyword: category });
       setIsAdvancedFilterActive(true);
-      
+
       const searchFilters: AdvancedSearchFilters = {
         keyword: category,
         page: 0,
         size: 12
       };
-      
+
       const response = await productService.advancedSearch(searchFilters);
-      
+
       // Update products with category results
       if (response && response.content && Array.isArray(response.content)) {
         setFilteredProducts(response.content);
@@ -167,10 +168,10 @@ function AppContent() {
   const handleFiltersApply = async (filters: AdvancedSearchFilters) => {
     setFilterLoading(true);
     setCurrentFilters(filters);
-    
+
     try {
       const response = await productService.advancedSearch(filters);
-      
+
       // Update products with filtered results
       if (response && response.content && Array.isArray(response.content)) {
         setFilteredProducts(response.content);
@@ -198,23 +199,23 @@ function AppContent() {
       setFilteredProducts(null);
       setIsAdvancedFilterActive(false);
       setAdvancedFilterPagination(null);
-      
+
       // Step 2: Set loading to true to show loader
       setClearFiltersLoading(true);
-      
+
       // Step 3: Clear filter states
       setCurrentFilters({});
-      
+
       // Step 4: Use hook's clearFilters function to fetch fresh data
       const { clearFilters } = hookReturn;
       clearFilters();
-      
+
       // Step 5: Wait for the hook to complete the API call
       await new Promise(resolve => setTimeout(resolve, 500));
-      
+
       // Step 6: Force component re-render to ensure UI updates with fresh data
       setForceRender(prev => prev + 1);
-      
+
     } catch (error) {
       console.error('Error clearing filters:', error);
     } finally {
@@ -239,7 +240,7 @@ function AppContent() {
       setAdvancedFilterPagination(null);
       setCurrentFilters({});
     }
-    
+
     // Use hook's updateSearchQuery function directly - let the hook handle loading
     const { updateSearchQuery } = hookReturn;
     updateSearchQuery(query);
@@ -261,7 +262,7 @@ function AppContent() {
   React.useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash.substring(1); // Remove the #
-      
+
       if (hash === 'product' && auth.isAuthenticated && auth.user?.roles?.includes('admin')) {
         setAppState('add-product');
       } else if (hash === 'Inventory' && auth.isAuthenticated && auth.user?.roles?.includes('admin')) {
@@ -509,7 +510,7 @@ function AppContent() {
           onNavigateHome={handleNavigateHome}
           setAppState={setAppState}
         />
-                <AppHeader
+        <AppHeader
           viewMode={viewMode}
           onViewModeChange={setViewMode}
           isGuestMode={isGuestMode}
@@ -530,7 +531,7 @@ function AppContent() {
         />
 
         <Container fluid className="py-4">
- 
+
 
           {/* Error Display */}
           {error && (
@@ -572,9 +573,9 @@ function AppContent() {
                   loading={isLoading}
                   className="mb-4"
                   columns={{
-                   
+
                     md: 3
-                    
+
                   }}
                 />
               ) : (
@@ -617,7 +618,7 @@ function AppContent() {
             </Alert>
           )}
         </Container>
-        
+
         {/* Advanced Filter Modal */}
         <AdvanceFilter
           show={showAdvancedFilter}
@@ -627,7 +628,7 @@ function AppContent() {
           loading={filterLoading}
           currentFilters={currentFilters}
         />
-        
+
         <Footer onNavigateHome={handleNavigateHome} setAppState={setAppState} />
       </div>
     );

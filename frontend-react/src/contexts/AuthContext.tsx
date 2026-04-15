@@ -42,7 +42,9 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
 
 
   switch (action.type) {
+
     case 'INIT_KEYCLOAK_START':
+      console.log("INIT_KEYCLOAK_START");
       return {
         ...state,
         loading: true,
@@ -50,6 +52,7 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
       };
 
     case 'INIT_KEYCLOAK_SUCCESS':
+      console.log("INIT_KEYCLOAK_SUCCESS");
       return {
         ...state,
         keycloak: action.payload,
@@ -58,6 +61,7 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
       };
 
     case 'INIT_KEYCLOAK_FAILURE':
+      console.log("INIT_KEYCLOAK_FAILURE");
       return {
         ...state,
         keycloak: null,
@@ -66,6 +70,7 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
       };
 
     case 'LOGIN_START':
+      console.log("LOGIN_START");
       return {
         ...state,
         loading: true,
@@ -73,6 +78,7 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
       };
 
     case 'LOGIN_SUCCESS':
+      console.log("LOGIN_SUCCESS", action);
 
       return {
         ...state,
@@ -84,7 +90,8 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
       };
 
     case 'LOGIN_FAILURE':
-      return {
+      console.log("LOGIN_FAILURE", action);
+        return {
         ...state,
         user: null,
         isAuthenticated: false,
@@ -93,6 +100,7 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
       };
 
     case 'LOGOUT':
+      console.log("LOGOUT");
       return {
         ...state,
         user: null,
@@ -102,6 +110,7 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
       };
 
     case 'CLEAR_ERROR':
+      console.log("CLEAR_ERROR");
       return {
         ...state,
         error: null
@@ -156,7 +165,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
         (keycloak as any).__initialized = true;
 
-
+        console.log("Keycloak initialized", authenticated);
+        console.log("Keycloak token", keycloak.token);
 
         if (authenticated && keycloak.token) {
 
@@ -178,7 +188,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
               roles: keycloak.tokenParsed?.realm_access?.roles || []
             };
 
-
+            console.log("User loaded", user);
 
             dispatch({
               type: 'LOGIN_SUCCESS',

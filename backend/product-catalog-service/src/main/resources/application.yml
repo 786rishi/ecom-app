@@ -28,3 +28,7 @@ aws:
   region: ap-east-1
   s3:
     bucket: product-images
+
+inventory:
+  service:
+    url: ${INVENTORY_SERVICE_URI}

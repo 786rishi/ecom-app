@@ -16,7 +16,7 @@ public class ProductSearchRequest {
 
     private Double minRating;
 
-    private String sortBy;   // price, rating
+    private String sortBy;   //   price, rating
     private String sortOrder; // asc, desc
 
     private int page = 0;

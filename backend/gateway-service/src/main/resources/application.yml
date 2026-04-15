@@ -32,12 +32,12 @@ spring:
           filters:
             - StripPrefix=1
 
-        - id: promotion-service
-          uri: ${PROMOTION_SERVICE_URI}
-          predicates:
-            - Path=/promotions/**
-          filters:
-            - StripPrefix=1
+#        - id: promotion-service
+#          uri: ${PROMOTION_SERVICE_URI}
+#          predicates:
+#            - Path=/promotions/**
+#          filters:
+#            - StripPrefix=1
 
         - id: order-service
           uri: ${ORDER_SERVICE_URI}

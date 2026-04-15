@@ -133,9 +133,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const initKeycloak = async () => {
       try {
         console.log('Initializing Keycloak...');
-        console.log('Keycloak URL:', (keycloak as any).url);
-        console.log('Keycloak realm:', (keycloak as any).realm);
-        console.log('Keycloak clientId:', (keycloak as any).clientId);
+        console.log('Keycloak instance:', keycloak);
+        console.log('Keycloak config:', (keycloak as any)._realm);
         
         if ((keycloak as any).__initialized) {
           console.log('Keycloak already initialized');
@@ -161,6 +160,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           redirectUri: window.location.origin,
           silentCheckSsoRedirectUri: window.location.origin + "/silent-check-sso.html",
           enableLogging: process.env.NODE_ENV === "development",
+          // Disable PKCE for HTTP environments to avoid Web Crypto API issues
+          ...(window.location.protocol === 'http:' && { pkceMethod: false }),
         } as any);
 
         console.log('Keycloak initialization completed. Authenticated:', authenticated);

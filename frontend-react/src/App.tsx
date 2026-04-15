@@ -91,10 +91,10 @@ function AppContent() {
 
   const handleLogin = async () => {
 
-   console.log("handleLogin called");
-  await keycloak.login({
-    redirectUri: window.location.origin
-  });
+  //  console.log("handleLogin called");
+  // await keycloak.login({
+  //   redirectUri: window.location.origin
+  // });
 
 
           // const authenticated = await keycloak.init({
@@ -103,7 +103,7 @@ function AppContent() {
           //   checkLoginIframe: false,
           // });
 
-    //window.open(`${KEYCLOAK_BASE_URL}/realms/master/protocol/openid-connect/auth?client_id=fb-login&redirect_uri=${REACT_APP_BASE_URL}&state=f7d4b3fd-5ec0-4f51-ac5f-273aeeba1696&response_mode=query&response_type=code&scope=openid&nonce=81ad7d0a-b7ed-4705-8f73-ed4682143379&code_challenge=Z57CRwqdPDpdWKKqnyL8OxnqO0JGV1R3pTjB55qiKMQ&code_challenge_method=S256`, '_self');
+    window.open(`${KEYCLOAK_BASE_URL}/realms/master/protocol/openid-connect/auth?client_id=fb-login&redirect_uri=${REACT_APP_BASE_URL}&state=f7d4b3fd-5ec0-4f51-ac5f-273aeeba1696&response_mode=query&response_type=code&scope=openid&nonce=81ad7d0a-b7ed-4705-8f73-ed4682143379&code_challenge=Z57CRwqdPDpdWKKqnyL8OxnqO0JGV1R3pTjB55qiKMQ&code_challenge_method=S256`, '_self');
   };
 
   const handleBrowseAsGuest = () => {

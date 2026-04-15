@@ -276,8 +276,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     try {
       dispatch({ type: 'LOGIN_START' });
 
-      await auth.keycloak.login({
-        redirectUri: window.location.origin
+      // await auth.keycloak.login({
+      //   redirectUri: window.location.origin
+      // });
+
+      const authenticated = await keycloak.init({
+        onLoad: "check-sso",   // ✅ better here
+      //  pkceMethod: "S256",
+        checkLoginIframe: false,
       });
 
     } catch (error) {

@@ -153,16 +153,24 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         //   redirectUri: window.location.origin
         // } as any);
 
-        const authenticated = await keycloak.init({
+        // For HTTP environments, disable PKCE completely to avoid Web Crypto API issues
+        const isHttpEnvironment = window.location.protocol === 'http:';
+        const keycloakConfig = {
           onLoad: "check-sso",
-          pkceMethod: "S256",
           checkLoginIframe: false,
           redirectUri: window.location.origin,
           silentCheckSsoRedirectUri: window.location.origin + "/silent-check-sso.html",
           enableLogging: process.env.NODE_ENV === "development",
-          // Disable PKCE for HTTP environments to avoid Web Crypto API issues
-          ...(window.location.protocol === 'http:' && { pkceMethod: false }),
-        } as any);
+        };
+
+        // Only add PKCE method for HTTPS environments
+        if (!isHttpEnvironment) {
+          (keycloakConfig as any).pkceMethod = "S256";
+        } else {
+          console.log('HTTP environment detected, disabling PKCE to avoid Web Crypto API issues');
+        }
+
+        const authenticated = await keycloak.init(keycloakConfig as any);
 
         console.log('Keycloak initialization completed. Authenticated:', authenticated);
         console.log('Keycloak token present:', !!keycloak.token);

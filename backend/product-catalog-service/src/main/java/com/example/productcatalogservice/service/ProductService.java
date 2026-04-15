@@ -29,7 +29,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @Service
 public class ProductService {
@@ -240,7 +239,7 @@ public class ProductService {
         existing.setPrice(updated.getPrice());
         existing.setCategory(updated.getCategory());
         existing.setAttributes(updated.getAttributes());
-        existing.setImages(updated.getImages());
+        existing.setImage(updated.getImage());
         existing.setUpdatedAt(LocalDateTime.now());
 
         return repository.save(existing);

@@ -153,75 +153,117 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         //   redirectUri: window.location.origin
         // } as any);
 
-        // For HTTP environments, disable PKCE completely to avoid Web Crypto API issues
+        // For HTTP environments, use minimal configuration to avoid Web Crypto API issues
         const isHttpEnvironment = window.location.protocol === 'http:';
-        const keycloakConfig = {
-          onLoad: "check-sso",
-          checkLoginIframe: false,
-          redirectUri: window.location.origin,
-          silentCheckSsoRedirectUri: window.location.origin + "/silent-check-sso.html",
-          enableLogging: process.env.NODE_ENV === "development",
-        };
+        
+        if (isHttpEnvironment) {
+          console.log('HTTP environment detected, using minimal Keycloak configuration');
+          
+          // Try a simpler initialization for HTTP environments
+          const authenticated = await keycloak.init({
+            onLoad: "check-sso",
+            checkLoginIframe: false,
+            enableLogging: process.env.NODE_ENV === "development",
+            // Omit redirectUri and other parameters that might trigger crypto operations
+          } as any);
+          
+          console.log('Keycloak initialization completed. Authenticated:', authenticated);
+          console.log('Keycloak token present:', !!keycloak.token);
+          console.log('Current URL:', window.location.href);
 
-        // Only add PKCE method for HTTPS environments
-        if (!isHttpEnvironment) {
-          (keycloakConfig as any).pkceMethod = "S256";
-        } else {
-          console.log('HTTP environment detected, disabling PKCE to avoid Web Crypto API issues');
-        }
+          (keycloak as any).__initialized = true;
 
-        const authenticated = await keycloak.init(keycloakConfig as any);
+          if (authenticated && keycloak.token) {
+            try {
+              window.history.replaceState({}, document.title, window.location.pathname);
 
-        console.log('Keycloak initialization completed. Authenticated:', authenticated);
-        console.log('Keycloak token present:', !!keycloak.token);
-        console.log('Current URL:', window.location.href);
+              const userProfile: any = await keycloak.loadUserProfile();
+              const user: User = {
+                id: userProfile.id || keycloak.subject || '',
+                email: userProfile.email || '',
+                name: userProfile.firstName && userProfile.lastName
+                  ? `${userProfile.firstName} ${userProfile.lastName}`
+                  : userProfile.username || '',
+                preferredUsername: userProfile.username,
+                givenName: userProfile.firstName,
+                familyName: userProfile.lastName,
+                roles: keycloak.tokenParsed?.realm_access?.roles || []
+              };
 
-        (keycloak as any).__initialized = true;
+              dispatch({
+                type: 'LOGIN_SUCCESS',
+                payload: { user, keycloak }
+              });
 
-        if (authenticated && keycloak.token) {
-
-
-          try {
-            window.history.replaceState({}, document.title, window.location.pathname);
-
-            const userProfile: any = await keycloak.loadUserProfile();
-            //await loadUserProfile();          
-            const user: User = {
-              id: userProfile.id || keycloak.subject || '',
-              email: userProfile.email || '',
-              name: userProfile.firstName && userProfile.lastName
-                ? `${userProfile.firstName} ${userProfile.lastName}`
-                : userProfile.username || '',
-              preferredUsername: userProfile.username,
-              givenName: userProfile.firstName,
-              familyName: userProfile.lastName,
-              roles: keycloak.tokenParsed?.realm_access?.roles || []
-            };
-
-
-
+              window.dispatchEvent(new CustomEvent('loginSuccess'));
+            } catch (error) {
+              dispatch({
+                type: 'LOGIN_FAILURE',
+                payload: 'Failed to load user profile'
+              });
+            }
+          } else {
+            console.log('User not authenticated, Keycloak initialized successfully');
             dispatch({
-              type: 'LOGIN_SUCCESS',
-              payload: { user, keycloak }
-            });
-
-
-
-            // Trigger success event
-            window.dispatchEvent(new CustomEvent('loginSuccess'));
-          } catch (error) {
-
-            dispatch({
-              type: 'LOGIN_FAILURE',
-              payload: 'Failed to load user profile'
+              type: 'INIT_KEYCLOAK_SUCCESS',
+              payload: keycloak
             });
           }
         } else {
-          console.log('User not authenticated, Keycloak initialized successfully');
-          dispatch({
-            type: 'INIT_KEYCLOAK_SUCCESS',
-            payload: keycloak
-          });
+          // HTTPS environment - use full configuration
+          const keycloakConfig = {
+            onLoad: "check-sso",
+            pkceMethod: "S256",
+            checkLoginIframe: false,
+            redirectUri: window.location.origin,
+            silentCheckSsoRedirectUri: window.location.origin + "/silent-check-sso.html",
+            enableLogging: process.env.NODE_ENV === "development",
+          };
+
+          const authenticated = await keycloak.init(keycloakConfig as any);
+
+          console.log('Keycloak initialization completed. Authenticated:', authenticated);
+          console.log('Keycloak token present:', !!keycloak.token);
+          console.log('Current URL:', window.location.href);
+
+          (keycloak as any).__initialized = true;
+
+          if (authenticated && keycloak.token) {
+            try {
+              window.history.replaceState({}, document.title, window.location.pathname);
+
+              const userProfile: any = await keycloak.loadUserProfile();
+              const user: User = {
+                id: userProfile.id || keycloak.subject || '',
+                email: userProfile.email || '',
+                name: userProfile.firstName && userProfile.lastName
+                  ? `${userProfile.firstName} ${userProfile.lastName}`
+                  : userProfile.username || '',
+                preferredUsername: userProfile.username,
+                givenName: userProfile.firstName,
+                familyName: userProfile.lastName,
+                roles: keycloak.tokenParsed?.realm_access?.roles || []
+              };
+
+              dispatch({
+                type: 'LOGIN_SUCCESS',
+                payload: { user, keycloak }
+              });
+
+              window.dispatchEvent(new CustomEvent('loginSuccess'));
+            } catch (error) {
+              dispatch({
+                type: 'LOGIN_FAILURE',
+                payload: 'Failed to load user profile'
+              });
+            }
+          } else {
+            console.log('User not authenticated, Keycloak initialized successfully');
+            dispatch({
+              type: 'INIT_KEYCLOAK_SUCCESS',
+              payload: keycloak
+            });
+          }
         }
 
         // Set up token refresh
@@ -302,9 +344,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       console.log('Starting login process...');
       dispatch({ type: 'LOGIN_START' });
 
-      await auth.keycloak.login({
-        redirectUri: window.location.origin
-      });
+      // For HTTP environments, use minimal login configuration
+      const isHttpEnvironment = window.location.protocol === 'http:';
+      const loginConfig = isHttpEnvironment ? {} : { redirectUri: window.location.origin };
+
+      await auth.keycloak.login(loginConfig);
 
     } catch (error) {
       console.error('Login error:', error);

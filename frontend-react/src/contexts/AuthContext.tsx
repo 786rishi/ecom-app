@@ -131,12 +131,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   useEffect(() => {
     const initKeycloak = async () => {
       try {
+        console.log('Initializing Keycloak...');
+        
+        if ((keycloak as any).__initialized) {
+          console.log('Keycloak already initialized');
+          return;
+        }
 
-        if ((keycloak as any).__initialized) return;
-
-
-
-
+        console.log('Starting Keycloak initialization...');
         dispatch({ type: 'INIT_KEYCLOAK_START' });
 
         // const authenticated = await keycloak.init({
@@ -157,9 +159,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           enableLogging: process.env.NODE_ENV === "development",
         } as any);
 
+        console.log('Keycloak initialization completed. Authenticated:', authenticated);
+        console.log('Keycloak token present:', !!keycloak.token);
+        console.log('Current URL:', window.location.href);
+
         (keycloak as any).__initialized = true;
-
-
 
         if (authenticated && keycloak.token) {
 
@@ -200,6 +204,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             });
           }
         } else {
+          console.log('User not authenticated, Keycloak initialized successfully');
           dispatch({
             type: 'INIT_KEYCLOAK_SUCCESS',
             payload: keycloak
@@ -271,12 +276,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const login = async () => {
+    console.log('Login function called');
+    console.log('Keycloak instance:', auth.keycloak);
+    
     if (!auth.keycloak) {
+      console.error('Keycloak not initialized');
       dispatch({ type: 'LOGIN_FAILURE', payload: 'Keycloak not initialized' });
       return;
     }
 
     try {
+      console.log('Starting login process...');
       dispatch({ type: 'LOGIN_START' });
 
       await auth.keycloak.login({
@@ -284,7 +294,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       });
 
     } catch (error) {
-
+      console.error('Login error:', error);
       dispatch({ type: 'LOGIN_FAILURE', payload: 'Login failed' });
     }
   };

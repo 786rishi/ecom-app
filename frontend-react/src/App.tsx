@@ -89,6 +89,7 @@ function AppContent() {
   }, [auth.isAuthenticated, appState, setAppState, setIsGuestMode]);
 
   const handleLogin = () => {
+    console.log('handleLogin called in App.tsx');
     keycloakLogin();
   };
 

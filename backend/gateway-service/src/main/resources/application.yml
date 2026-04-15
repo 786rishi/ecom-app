@@ -6,9 +6,10 @@ spring:
   cloud:
     gateway:
       globalcors:
+        add-to-simple-url-handler-mapping: true   # ✅ ADD THIS
         corsConfigurations:
           '[/**]':
-            allowedOrigins: "*"
+            allowedOrigins: "http://mcart-frontend.s3-website-us-east-1.amazonaws.com"
             allowedMethods:
               - GET
               - POST

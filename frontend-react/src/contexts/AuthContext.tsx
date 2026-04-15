@@ -152,6 +152,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           onLoad: "check-sso",
           pkceMethod: "S256",
           checkLoginIframe: false,
+          redirectUri: window.location.origin,
+          silentCheckSsoRedirectUri: window.location.origin + "/silent-check-sso.html",
+          enableLogging: process.env.NODE_ENV === "development",
         } as any);
 
         (keycloak as any).__initialized = true;

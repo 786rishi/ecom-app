@@ -26,5 +26,4 @@ public class Inventory {
     @Version  // 🔥 optimistic locking
     private Long version;
 
-    // getters & setters
 }

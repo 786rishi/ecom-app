@@ -33,6 +33,5 @@ public class Content {
     private String metaTitle;
     private String metaDescription;
 
-    // Media
-    private List<String> imageUrls;
+    private String imageUrl;
 }

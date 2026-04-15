@@ -61,7 +61,7 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
       };
 
     case 'INIT_KEYCLOAK_FAILURE':
-      console.log("INIT_KEYCLOAK_FAILURE");
+      console.log("INIT_KEYCLOAK_FAILURE", action);
       return {
         ...state,
         keycloak: null,
@@ -157,11 +157,19 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         //   redirectUri: window.location.origin
         // } as any);
 
-        const authenticated = await keycloak.init({
-          onLoad: "login-required",  //"check-sso",
-          //pkceMethod: "S256",
-          checkLoginIframe: false,
-        } as any);
+
+        let authenticated;
+        
+        try {
+          authenticated = await keycloak.init({
+            onLoad: "login-required",  //"check-sso",
+            //pkceMethod: "S256",
+            checkLoginIframe: false,
+          } as any);
+        } catch (error) {
+          console.error("Keycloak initialization failed", error);
+        }
+ 
 
         (keycloak as any).__initialized = true;
 

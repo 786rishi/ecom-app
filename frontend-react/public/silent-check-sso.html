@@ -3,10 +3,14 @@
 <head>
     <title>Silent Check SSO</title>
     <script>
+        // Send the current URL as the callback URL
+        var callbackUrl = window.location.href;
+        
         function silentCheckSsoCallback() {
             var message = {
                 type: 'keycloak-silent-check-sso',
-                status: 'success'
+                status: 'success',
+                url: callbackUrl
             };
             parent.postMessage(message, '*');
         }
@@ -14,17 +18,15 @@
         function silentCheckSsoError() {
             var message = {
                 type: 'keycloak-silent-check-sso',
-                status: 'error'
+                status: 'error',
+                url: callbackUrl
             };
             parent.postMessage(message, '*');
         }
 
-        // Check if Keycloak is available and initialized
-        if (window.keycloak) {
-            silentCheckSsoCallback();
-        } else {
-            silentCheckSsoError();
-        }
+        // Immediately send the callback with the URL
+        // This prevents the url.indexOf error
+        silentCheckSsoCallback();
     </script>
 </head>
 <body>

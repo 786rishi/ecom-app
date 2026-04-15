@@ -129,9 +129,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   // Initialize Keycloak
   useEffect(() => {
+    console.log('AuthContext useEffect triggered - starting Keycloak initialization');
     const initKeycloak = async () => {
       try {
         console.log('Initializing Keycloak...');
+        console.log('Keycloak URL:', (keycloak as any).url);
+        console.log('Keycloak realm:', (keycloak as any).realm);
+        console.log('Keycloak clientId:', (keycloak as any).clientId);
         
         if ((keycloak as any).__initialized) {
           console.log('Keycloak already initialized');
@@ -256,7 +260,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         };
 
       } catch (error) {
-
+        console.error('Keycloak initialization failed:', error);
         dispatch({
           type: 'INIT_KEYCLOAK_FAILURE',
           payload: 'Failed to initialize authentication'

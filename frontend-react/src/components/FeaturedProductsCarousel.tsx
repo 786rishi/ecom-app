@@ -154,7 +154,7 @@ const FeaturedProductsCarousel: React.FC<FeaturedProductsCarouselProps> = ({
                       <div className="position-relative">
                         <Card.Img
                           variant="top"
-                          src={product.images?.[0] || 'https://via.placeholder.com/300x200?text=No+Image'}
+                          src={product.image || 'https://via.placeholder.com/300x200?text=No+Image'}
                           alt={product.name}
                           style={{ height: '180px', objectFit: 'cover' }}
                         />

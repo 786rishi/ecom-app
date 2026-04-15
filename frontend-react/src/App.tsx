@@ -91,11 +91,11 @@ function AppContent() {
 
   const handleLogin = async () => {
 
-    const handleLogin = async () => {
+   console.log("handleLogin called");
   await keycloak.login({
     redirectUri: window.location.origin
   });
-};
+
 
           // const authenticated = await keycloak.init({
           //   onLoad: "check-sso",   // ✅ better here

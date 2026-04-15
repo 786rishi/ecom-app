@@ -150,7 +150,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
         const authenticated = await keycloak.init({
           onLoad: "login-required",  //"check-sso",
-          pkceMethod: "S256",
+          //pkceMethod: "S256",
           checkLoginIframe: false,
         } as any);
 

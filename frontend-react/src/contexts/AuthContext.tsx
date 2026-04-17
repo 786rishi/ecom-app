@@ -44,7 +44,6 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
   switch (action.type) {
 
     case 'INIT_KEYCLOAK_START':
-      console.log("INIT_KEYCLOAK_START");
       return {
         ...state,
         loading: true,
@@ -52,7 +51,6 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
       };
 
     case 'INIT_KEYCLOAK_SUCCESS':
-      console.log("INIT_KEYCLOAK_SUCCESS");
       return {
         ...state,
         keycloak: action.payload,
@@ -61,7 +59,6 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
       };
 
     case 'INIT_KEYCLOAK_FAILURE':
-      console.log("INIT_KEYCLOAK_FAILURE", action);
       return {
         ...state,
         keycloak: null,
@@ -70,7 +67,6 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
       };
 
     case 'LOGIN_START':
-      console.log("LOGIN_START");
       return {
         ...state,
         loading: true,
@@ -78,8 +74,6 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
       };
 
     case 'LOGIN_SUCCESS':
-      console.log("LOGIN_SUCCESS", action);
-
       return {
         ...state,
         user: (action as any).payload.user,
@@ -90,7 +84,6 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
       };
 
     case 'LOGIN_FAILURE':
-      console.log("LOGIN_FAILURE", action);
         return {
         ...state,
         user: null,
@@ -100,7 +93,6 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
       };
 
     case 'LOGOUT':
-      console.log("LOGOUT");
       return {
         ...state,
         user: null,
@@ -110,7 +102,6 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
       };
 
     case 'CLEAR_ERROR':
-      console.log("CLEAR_ERROR");
       return {
         ...state,
         error: null

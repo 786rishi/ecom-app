@@ -12,11 +12,15 @@ interface WishlistResponse {
   products: Product[];
 }
 
+interface WishlistProps {
+  setAppState?: (state: any) => void;
+}
+
 interface WishlistProduct extends Product {
   // Keep the original ProductAttribute[] but we'll handle API conversion
 }
 
-const Wishlist: React.FC = () => {
+const Wishlist: React.FC<WishlistProps> = ({ setAppState }) => {
   const { auth } = useAuth();
   const { addToCart } = useCart();
   const [wishlistItems, setWishlistItems] = useState<WishlistProduct[]>([]);
@@ -137,6 +141,11 @@ const Wishlist: React.FC = () => {
     return attributes[key] || 'N/A';
   };
 
+  const handleBrowseProducts = () => {
+    setAppState?.('browse');
+    window.scrollTo(0, 0);
+  };
+
   if (loading) {
     return (
       <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '400px' }}>
@@ -175,7 +184,7 @@ const Wishlist: React.FC = () => {
           <Alert variant="info">
             <Alert.Heading>Your wishlist is empty</Alert.Heading>
             <p>Browse our products and add items to your wishlist to see them here.</p>
-            <Button variant="primary" href="#products">
+            <Button variant="primary" onClick={handleBrowseProducts}>
               Browse Products
             </Button>
           </Alert>
@@ -288,7 +297,6 @@ const Wishlist: React.FC = () => {
         </Toast.Body>
       </Toast>
 
-      <Footer />
     </>
   );
 };

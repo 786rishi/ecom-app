@@ -191,7 +191,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     try {
       const result = await orderService.getCart(auth.user.id);
       
-      if (result.success && result.items.length > 0) {
+      if (result?.success && result?.items?.length > 0) {
         // Convert API response to CartItem format
         const cartItems = result.items.map((item: any) => ({
           product: {

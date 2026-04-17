@@ -126,7 +126,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ show, onHide }) => {
 
       try {
         await Promise.all(inventoryPromises);
-        console.log('All inventory confirmations completed successfully');
+        // console.log('All inventory confirmations completed successfully');
       } catch (error) {
         console.error('Inventory confirmation failed:', error);
         // Continue with order even if inventory confirmation fails

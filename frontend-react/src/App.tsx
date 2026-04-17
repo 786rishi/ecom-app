@@ -277,6 +277,8 @@ function AppContent() {
     const handleHashChange = () => {
       const hash = window.location.hash.substring(1); // Remove the #
 
+      console.log("hash :::", hash);
+
       if (hash === 'product' && auth.isAuthenticated && auth.user?.roles?.includes('admin')) {
         setAppState('add-product');
       } else if (hash === 'Inventory' && auth.isAuthenticated && auth.user?.roles?.includes('admin')) {
@@ -318,6 +320,7 @@ function AppContent() {
   }, []);
 
   // Show landing page
+  {console.log("appState :::", appState)}
   if (appState === 'main') {
     return (
       <LandingPage
@@ -503,7 +506,7 @@ function AppContent() {
           onNavigateHome={handleNavigateHome}
           setAppState={setAppState}
         />
-        <Wishlist />
+        <Wishlist setAppState={setAppState} />
         <Footer onNavigateHome={handleNavigateHome} setAppState={setAppState} />
       </div>
     );
@@ -534,18 +537,16 @@ function AppContent() {
           onAdvancedFilterClick={handleAdvancedFilterClick}
           onClearAdvancedFilters={handleFiltersClear}
           onSearch={handleSearch}
-          hasActiveFilters={isAdvancedFilterActive}
         />
 
-        {/* Featured Products Carousel */}
-        <FeaturedProductsCarousel
-          onProductClick={handleProductClick}
-          showAddToCart={auth.isAuthenticated}
-          showWishlist={auth.isAuthenticated}
-        />
+        {/* Featured Products Carousel - Only show when no search is active */}
+          <FeaturedProductsCarousel
+            onProductClick={handleProductClick}
+            showAddToCart={auth.isAuthenticated}
+            showWishlist={auth.isAuthenticated}
+          />
 
         <Container fluid className="py-4">
-
 
           {/* Error Display */}
           {error && (

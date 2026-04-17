@@ -104,21 +104,13 @@ export const productService = {
         },
       });
 
-
-
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
       const data: ProductResponse = await response.json();
-
-
-
-
-
       return data;
     } catch (error) {
-
       throw error;
     }
   },

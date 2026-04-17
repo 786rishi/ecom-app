@@ -38,12 +38,12 @@ const ProfessionalNavBar: React.FC<ProfessionalNavBarProps> = ({
   };
 
   const navItems: NavItem[] = [
-    {
-      name: 'Home',
-      href: '#home',
-      action: () => setAppState?.('main'),
-      icon: '🏠'
-    },
+    // {
+    //   name: 'Home',
+    //   href: '#home',
+    //   action: () => setAppState?.('main'),
+    //   icon: '🏠'
+    // },
     {
       name: 'Products',
       href: '#products',

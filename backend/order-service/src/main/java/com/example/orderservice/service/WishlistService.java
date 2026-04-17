@@ -37,7 +37,7 @@ public class WishlistService {
         repository.save(wishlist);
     }
 
-    // ❌ Remove
+    // Remove
     public void remove(String userId, String productId) {
         repository.deleteByUserIdAndProductId(userId, productId);
     }

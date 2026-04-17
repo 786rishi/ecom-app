@@ -4,8 +4,11 @@ import com.example.productcatalogservice.client.InventoryClient;
 import com.example.productcatalogservice.dto.ProductSearchRequest;
 import com.example.productcatalogservice.exception.ProductNotFoundException;
 import com.example.productcatalogservice.model.Product;
+import com.example.productcatalogservice.model.ProductTestimonial;
 import com.example.productcatalogservice.repository.ProductRepository;
+import com.example.productcatalogservice.repository.ProductTestimonialRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.AllArgsConstructor;
 import org.opensearch.action.index.IndexRequest;
 import org.opensearch.action.search.SearchRequest;
 import org.opensearch.action.search.SearchResponse;
@@ -30,6 +33,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@AllArgsConstructor
 @Service
 public class ProductService {
 
@@ -37,15 +41,7 @@ public class ProductService {
     private final RestHighLevelClient restHighLevelClient;
     private final ObjectMapper objectMapper;
     private final InventoryClient inventoryClient;
-
-    public ProductService(ProductRepository repository, RestHighLevelClient restHighLevelClient,
-                          ObjectMapper objectMapper, InventoryClient inventoryClient){
-        this.repository = repository;
-        this.restHighLevelClient = restHighLevelClient;
-        this.objectMapper = objectMapper;
-        this.inventoryClient = inventoryClient;
-    }
-
+    private final ProductTestimonialRepository testimonialRepository;
 
 
     public Product create(Product product) throws IOException {
@@ -363,5 +359,15 @@ public class ProductService {
         long totalHits = response.getHits().getTotalHits().value;
 
         return new PageImpl<>(result, PageRequest.of(request.getPage(), request.getSize()), totalHits);
+    }
+
+    public List<ProductTestimonial> getProductTestimonial(String productId) {
+        return testimonialRepository.findByProductIdAndApprovedTrue(productId);
+    }
+
+    public ProductTestimonial addProductTestimonial(ProductTestimonial productTestimonial) {
+        repository.findById(productTestimonial.getProductId())
+                .orElseThrow(() -> new RuntimeException("Product not found"));
+        return testimonialRepository.save(productTestimonial);
     }
 }

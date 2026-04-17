@@ -20,6 +20,7 @@ import ProductDetails from './components/ProductDetails';
 import PrivacyPolicy from './components/PrivacyPolicy';
 import OrderHistory from './components/OrderHistory';
 import Wishlist from './components/Wishlist';
+import NewsAndEvents from './components/NewsAndEvents';
 import AdvanceFilter from './components/AdvanceFilter';
 import Footer from './components/Footer';
 import { useProducts, setStateChangeCallback } from './hooks/useProducts';
@@ -31,7 +32,7 @@ import { productService, AdvancedSearchFilters } from './services/productService
 import './App.css';
 import keycloak from './services/keycloak';
 
-type AppState = 'main' | 'browse' | 'add-product' | 'inventory-management' | 'contact' | 'promotions' | 'product-details' | 'privacy-policy' | 'order-history' | 'wishlist';
+type AppState = 'main' | 'browse' | 'add-product' | 'inventory-management' | 'contact' | 'promotions' | 'product-details' | 'privacy-policy' | 'order-history' | 'wishlist' | 'news-events';
 
 // Track previous render to compare
 let lastRenderProducts: any = undefined;
@@ -291,6 +292,8 @@ function AppContent() {
         setAppState('wishlist');
       } else if (hash === 'contact') {
         setAppState('contact');
+      } else if (hash === 'NewsAndEvents') {
+        setAppState('news-events');
       } else if (hash === 'OrderHistory' && !auth.isAuthenticated) {
         // Redirect non-authenticated users to main
         setAppState('main');
@@ -512,6 +515,21 @@ function AppContent() {
     );
   }
 
+  // Show news & events page
+  if (appState === 'news-events') {
+    return (
+      <div className="App">
+        <ProfessionalNavBar
+          isGuestMode={isGuestMode}
+          onNavigateHome={handleNavigateHome}
+          setAppState={setAppState}
+        />
+        <NewsAndEvents />
+        <Footer onNavigateHome={handleNavigateHome} setAppState={setAppState} />
+      </div>
+    );
+  }
+
   // Show products page
   if (appState === 'browse') {
     // Use filtered products if advanced filter is active, otherwise use normal products
@@ -588,9 +606,7 @@ function AppContent() {
                   loading={isLoading}
                   className="mb-4"
                   columns={{
-
                     md: 3
-
                   }}
                 />
               ) : (

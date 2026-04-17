@@ -1,6 +1,7 @@
 package com.example.orderservice.controller;
 
 import com.example.orderservice.dto.CheckoutRequest;
+import com.example.orderservice.dto.OrderResponse;
 import com.example.orderservice.entity.order.Order;
 import com.example.orderservice.service.OrderService;
 import jakarta.mail.MessagingException;
@@ -19,7 +20,7 @@ public class OrderController {
     }
 
     @GetMapping("/{userId}")
-    public List<Order> findOrderByUserId(@PathVariable("userId") String userId) {
+    public List<OrderResponse> findOrderByUserId(@PathVariable("userId") String userId) {
         return service.findOrderByUserId(userId);
     }
 

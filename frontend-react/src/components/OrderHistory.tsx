@@ -1,8 +1,36 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Table, Button, Alert, Spinner } from 'react-bootstrap';
+import { Container, Table, Button, Alert, Spinner, Card, Row, Col } from 'react-bootstrap';
 import { useAuth } from '../contexts/AuthContext';
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
+
+interface Product {
+  id: string;
+  name: string;
+  description: string;
+  category: string;
+  price: number;
+  active: boolean;
+  featured: boolean;
+  featureStart: string;
+  featureEnd: string;
+  availableQuantity: number;
+  inStock: boolean;
+  attributes: {
+    color: string;
+    size: string;
+  };
+  image: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface OrderItem {
+  id: number;
+  quantity: number;
+  price: number;
+  product: Product;
+}
 
 interface Order {
   id: number;
@@ -11,6 +39,7 @@ interface Order {
   status: string;
   paymentId: string | null;
   createdAt: string;
+  items: OrderItem[];
 }
 
 const OrderHistory: React.FC = () => {
@@ -20,6 +49,7 @@ const OrderHistory: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [returningOrderId, setReturningOrderId] = useState<number | null>(null);
+  const [expandedOrders, setExpandedOrders] = useState<Set<number>>(new Set());
 
   // Fetch orders from API
   const fetchOrders = async () => {
@@ -112,6 +142,22 @@ const OrderHistory: React.FC = () => {
     }).format(amount);
   };
 
+  // Toggle order expansion
+  const toggleOrderExpansion = (orderId: number) => {
+    const newExpanded = new Set(expandedOrders);
+    if (newExpanded.has(orderId)) {
+      newExpanded.delete(orderId);
+    } else {
+      newExpanded.add(orderId);
+    }
+    setExpandedOrders(newExpanded);
+  };
+
+  // Get fallback image
+  const getFallbackImage = (image: string | null): string => {
+    return image || 'https://acullen-portfolio.eddl.tru.ca/wp-content/themes/koji/assets/images/default-fallback-image.png';
+  };
+
   if (loading) {
     return (
       <Container className="py-4">
@@ -143,41 +189,45 @@ const OrderHistory: React.FC = () => {
         </Alert>
       )}
       
-      {/* Orders Table */}
+      {/* Orders List */}
       {orders.length === 0 ? (
         <Alert variant="info">
           No orders found. Start shopping to see your order history here!
         </Alert>
       ) : (
-        <Table striped bordered hover responsive>
-          <thead>
-            <tr>
-              <th>Order ID</th>
-              <th>Total Amount</th>
-              <th>Status</th>
-              <th>Payment ID</th>
-              <th>Created Date</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {orders.map((order) => (
-              <tr key={order.id}>
-                <td>{order.id}</td>
-                <td>{formatCurrency(order.totalAmount)}</td>
-                <td>
-                  <span className={`badge ${
-                    order.status === 'PAID' ? 'bg-success' : 
-                    order.status === 'PAYMENT_PENDING' ? 'bg-warning' : 
-                    order.status === 'RETURNED' ? 'bg-danger' :
-                    'bg-secondary'
-                  }`}>
-                    {order.status}
-                  </span>
-                </td>
-                <td>{order.paymentId || 'N/A'}</td>
-                <td>{formatDate(order.createdAt)}</td>
-                <td>
+        <div className="space-y-3">
+          {orders.map((order) => (
+            <Card key={order.id} className="mb-3">
+              <Card.Header className="d-flex justify-content-between align-items-center">
+                <div className="d-flex align-items-center">
+                  <Button
+                    variant="link"
+                    className="p-0 me-2 text-decoration-none"
+                    onClick={() => toggleOrderExpansion(order.id)}
+                  >
+                    <span style={{ fontSize: '20px' }}>
+                      {expandedOrders.has(order.id) ? '▲' : '▼'}
+                    </span>
+                  </Button>
+                  <div>
+                    <strong>Order #{order.id}</strong>
+                    <div className="text-muted small">
+                      {formatDate(order.createdAt)}
+                    </div>
+                  </div>
+                </div>
+                <div className="d-flex align-items-center gap-3">
+                  <div className="text-end">
+                    <div className="fw-bold">{formatCurrency(order.totalAmount)}</div>
+                    <span className={`badge ${
+                      order.status === 'CONFIRMED' ? 'bg-success' : 
+                      order.status === 'PAYMENT_PENDING' ? 'bg-warning' : 
+                      order.status === 'RETURNED' ? 'bg-danger' :
+                      'bg-secondary'
+                    }`}>
+                      {order.status}
+                    </span>
+                  </div>
                   <Button
                     variant="danger"
                     size="sm"
@@ -204,21 +254,86 @@ const OrderHistory: React.FC = () => {
                       order.status === 'RETURNED' ? 'Returned' : 'Return'
                     )}
                   </Button>
-                  {!isWithinLast7Days(order.createdAt) && (
-                    <small className="text-muted d-block mt-1">
-                      Returns not available after 7 days
-                    </small>
-                  )}
-                  {order.status === 'RETURNED' && (
-                    <small className="text-muted d-block mt-1">
-                      Order has been returned
-                    </small>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </Table>
+                </div>
+              </Card.Header>
+              
+              {expandedOrders.has(order.id) && (
+                <Card.Body>
+                  <h6 className="mb-3">Order Items ({order.items.length})</h6>
+                  <Table striped bordered hover responsive size="sm">
+                    <thead>
+                      <tr>
+                        <th>Product</th>
+                        <th>Details</th>
+                        <th>Quantity</th>
+                        <th>Price</th>
+                        <th>Total</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {order.items.map((item) => (
+                        <tr key={item.id}>
+                          <td>
+                            <div className="d-flex align-items-center">
+                              <img
+                                src={getFallbackImage(item.product.image)}
+                                alt={item.product.name}
+                                style={{
+                                  width: '60px',
+                                  height: '60px',
+                                  objectFit: 'cover',
+                                  marginRight: '12px'
+                                }}
+                                onError={(e) => {
+                                  e.currentTarget.src = 'https://acullen-portfolio.eddl.tru.ca/wp-content/themes/koji/assets/images/default-fallback-image.png';
+                                }}
+                              />
+                              <div>
+                                <div className="fw-semibold">{item.product.name}</div>
+                                <div className="text-muted small">{item.product.category}</div>
+                              </div>
+                            </div>
+                          </td>
+                          <td>
+                            <div className="small">
+                              <div>Color: <span className="text-capitalize">{item.product.attributes.color}</span></div>
+                              <div>Size: {item.product.attributes.size}</div>
+                            </div>
+                          </td>
+                          <td>{item.quantity}</td>
+                          <td>{formatCurrency(item.price)}</td>
+                          <td className="fw-semibold">{formatCurrency(item.price * item.quantity)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                    <tfoot>
+                      <tr>
+                        <td colSpan={4} className="text-end fw-bold">Order Total:</td>
+                        <td className="fw-bold text-success">{formatCurrency(order.totalAmount)}</td>
+                      </tr>
+                    </tfoot>
+                  </Table>
+                  
+                  <div className="mt-3 d-flex justify-content-between">
+                    <div className="text-muted small">
+                      Payment ID: {order.paymentId || 'N/A'}
+                    </div>
+                    {!isWithinLast7Days(order.createdAt) && (
+                      <small className="text-muted">
+                        Returns not available after 7 days
+                      </small>
+                    )}
+                    {order.status === 'RETURNED' && (
+                      <small className="text-muted">
+                        Order has been returned
+                      </small>
+                    )}
+                  </div>
+                </Card.Body>
+              )}
+            </Card>
+          ))}
+        </div>
       )}
     </Container>
   );

@@ -57,7 +57,7 @@ spring:
             - StripPrefix=1
 
         - id: content-service
-          uri: http://content-service:8083
+          uri: ${CONTENT_SERVICE_URI}
           predicates:
             - Path=/content/**
           filters:

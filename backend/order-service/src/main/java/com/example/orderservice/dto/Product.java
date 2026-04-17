@@ -1,11 +1,8 @@
 package com.example.orderservice.dto;
 
 import lombok.Data;
-import org.springframework.data.annotation.Id;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 @Data
@@ -26,7 +23,7 @@ public class Product {
     // flexible attributes (VERY IMPORTANT)
     private Map<String, Object> attributes = new HashMap<>();
 
-    private List<String> images = new ArrayList<>();
+    private String image;
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

@@ -80,6 +80,14 @@ const ProfessionalNavBar: React.FC<ProfessionalNavBarProps> = ({
       action: () => {
         window.location.hash = 'contact';
       }
+    },
+    {
+      name: 'News & Events',
+      href: '#NewsAndEvents',
+      icon: '📰',
+      action: () => {
+        window.location.hash = 'NewsAndEvents';
+      }
     }
   ];
 

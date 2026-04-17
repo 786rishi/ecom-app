@@ -273,6 +273,32 @@ class OrderService {
     }
   }
 
+  async updateQuantity(userId: string, productId: string, quantity: number): Promise<OrderResponse> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/order/cart/update/quantity?userId=${encodeURIComponent(userId)}&productId=${encodeURIComponent(productId)}&quantity=${quantity}`, {
+        method: 'PUT',
+        headers: this.getAuthHeaders()
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return {
+        success: true,
+        message: 'Quantity updated successfully',
+        ...data
+      };
+    } catch (error) {
+      console.error('Error updating quantity:', error);
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : 'Failed to update quantity'
+      };
+    }
+  }
+
   async confirmInventory(productId: string, quantity: number): Promise<OrderResponse> {
     try {
       const response = await fetch(`${API_BASE_URL}/inventory/inventory/confirm?productId=${encodeURIComponent(productId)}&quantity=${quantity}`, {

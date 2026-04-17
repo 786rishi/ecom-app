@@ -50,11 +50,11 @@ const ProfessionalNavBar: React.FC<ProfessionalNavBarProps> = ({
       action: () => setAppState?.('browse'),
       icon: '📦'
     },
-    {
-      name: 'About',
-      href: '#about',
-      icon: 'ℹ️'
-    },
+    // {
+    //   name: 'About',
+    //   href: '#about',
+    //   icon: 'ℹ️'
+    // },
     {
       name: 'Orders',
       href: '#OrderHistory',

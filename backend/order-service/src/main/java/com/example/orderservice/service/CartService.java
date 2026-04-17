@@ -20,8 +20,7 @@ public class CartService {
 
     @Transactional("cartTransactionManager")
     public Cart getCart(String userId) {
-        return repository.findFirstByUserId(userId)
-                .orElseThrow(() -> new RuntimeException("Cart not found"));
+        return repository.findFirstByUserId(userId).orElse(new Cart());
     }
 
 

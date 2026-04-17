@@ -296,7 +296,6 @@ public class ProductService {
 
         BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
 
-        // 🔍 Search
         if (request.getKeyword() != null) {
             boolQuery.must(QueryBuilders.multiMatchQuery(
                     request.getKeyword(),

@@ -18,4 +18,6 @@ public interface ProductRepository extends MongoRepository<Product, String> {
 
     @Query("{ $text: { $search: ?0 } }")
     Page<Product> searchByText(String keyword, Pageable pageable);
+
+    List<Product> findByCategoryAndIdNot(String category, String id);
 }

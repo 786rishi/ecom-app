@@ -95,16 +95,21 @@ public class ProductController {
     }
 
 
-    @PostMapping("/products/testimonials")
+    @PostMapping("/testimonials")
     public ProductTestimonial addProductTestimonial(
             @RequestBody ProductTestimonial productTestimonial) {
         return service.addProductTestimonial(productTestimonial);
     }
 
-    @GetMapping("/products/testimonials/{productId}")
+    @GetMapping("/testimonials/{productId}")
     public List<ProductTestimonial> getProductTestimonial(
             @PathVariable("productId") String productId) {
         return service.getProductTestimonial(productId);
+    }
+
+    @GetMapping("/{productId}/related")
+    public List<Product> related(@PathVariable("productId") String productId) {
+        return service.getRelatedProducts(productId);
     }
 
 }

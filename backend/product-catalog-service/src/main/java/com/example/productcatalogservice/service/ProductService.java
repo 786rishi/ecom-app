@@ -6,7 +6,9 @@ import com.example.productcatalogservice.exception.ProductNotFoundException;
 import com.example.productcatalogservice.model.Product;
 import com.example.productcatalogservice.model.ProductTestimonial;
 import com.example.productcatalogservice.repository.ProductRepository;
-import com.example.productcatalogservice.repository.ProductTestimonialRepository;
+import org.opensearch.index.query.MoreLikeThisQueryBuilder;
+import org.opensearch.index.query.MoreLikeThisQueryBuilder.Item;
+import org.opensearch.index.query.QueryBuilders;import com.example.productcatalogservice.repository.ProductTestimonialRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AllArgsConstructor;
 import org.opensearch.action.index.IndexRequest;
@@ -15,6 +17,7 @@ import org.opensearch.action.search.SearchResponse;
 import org.opensearch.client.RequestOptions;
 import org.opensearch.client.RestHighLevelClient;
 import org.opensearch.index.query.BoolQueryBuilder;
+import org.opensearch.index.query.MoreLikeThisQueryBuilder;
 import org.opensearch.index.query.QueryBuilders;
 import org.opensearch.index.query.RangeQueryBuilder;
 import org.opensearch.search.SearchHit;
@@ -32,6 +35,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @AllArgsConstructor
 @Service
@@ -370,4 +374,75 @@ public class ProductService {
                 .orElseThrow(() -> new RuntimeException("Product not found"));
         return testimonialRepository.save(productTestimonial);
     }
+
+    public List<String> searchRelatedProductIds(String productId, String category) {
+
+        try {
+            SearchRequest searchRequest = new SearchRequest("products");
+
+            // 🔥 Bool Query
+            BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
+
+            // 🔥 more_like_this (core similarity)
+            MoreLikeThisQueryBuilder mltQuery = QueryBuilders.moreLikeThisQuery(
+                            new String[]{"name", "description"},
+                            null,
+                            new Item[]{new Item("products", productId)}
+                    )
+                    .minTermFreq(1)
+                    .minDocFreq(1);
+
+            boolQuery.must(mltQuery);
+
+            // 🔥 filters
+            boolQuery.filter(QueryBuilders.termQuery("category.keyword", category));
+            boolQuery.filter(QueryBuilders.termQuery("active", true));
+            boolQuery.filter(QueryBuilders.termQuery("inStock", true));
+
+            // 🔥 exclude same product
+            boolQuery.mustNot(QueryBuilders.termQuery("_id", productId));
+
+            // 🔥 Search Source
+            SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
+            sourceBuilder.query(boolQuery);
+            sourceBuilder.size(6); // limit
+
+            searchRequest.source(sourceBuilder);
+
+            // 🔥 Execute
+            SearchResponse response = restHighLevelClient.search(searchRequest, RequestOptions.DEFAULT);
+
+            // 🔥 Extract IDs
+            List<String> ids = new ArrayList<>();
+            for (SearchHit hit : response.getHits().getHits()) {
+                ids.add(hit.getId());
+            }
+
+            return ids;
+
+        } catch (Exception e) {
+            throw new RuntimeException("Error while fetching related products", e);
+        }
+    }
+
+    public List<Product> getRelatedProducts(String productId) {
+
+        Product current = repository.findById(productId)
+                .orElseThrow(() -> new RuntimeException("Product not found"));
+
+        // 🔥 OpenSearch call
+        List<String> relatedIds = searchRelatedProductIds(productId, current.getCategory());
+
+        // 🔥 fallback (VERY IMPORTANT)
+        if (relatedIds.isEmpty()) {
+            return repository
+                    .findByCategoryAndIdNot(current.getCategory(), productId);
+        }
+
+        // 🔥 fetch from DB
+        List<Product> products = repository.findAllById(relatedIds);
+
+        return products;
+    }
+
 }

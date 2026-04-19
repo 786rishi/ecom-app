@@ -2,6 +2,25 @@
   text-align: center;
 }
 
+/* Related Products Scrollbar Styling */
+.related-products-scroll::-webkit-scrollbar {
+  height: 8px;
+}
+
+.related-products-scroll::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.related-products-scroll::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+.related-products-scroll::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
 .App-logo {
   height: 40vmin;
   pointer-events: none;

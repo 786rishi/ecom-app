@@ -437,6 +437,7 @@ function AppContent() {
         <ProductDetails
           product={selectedProduct}
           onBack={handleBackToProducts}
+          onProductClick={handleProductClick}
           isAuthenticated={auth.isAuthenticated}
         />
       </div>

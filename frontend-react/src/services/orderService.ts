@@ -1,4 +1,5 @@
 import { CartItem } from '../contexts/CartContext';
+import { Product } from '../types/product';
 
 export interface AddToCartRequest {
   productId: string;
@@ -321,6 +322,60 @@ class OrderService {
       return {
         success: false,
         message: error instanceof Error ? error.message : 'Failed to confirm inventory'
+      };
+    }
+  }
+
+  async getRelatedProducts(productId: string): Promise<{ success: boolean; message: string; products: Product[] }> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/products/products/${encodeURIComponent(productId)}/related`, {
+        method: 'GET',
+        headers: this.getAuthHeaders()
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      
+      // Transform API response to match Product interface
+      const products: Product[] = data.map((item: any) => ({
+        id: item.id,
+        name: item.name,
+        description: item.description,
+        price: item.price,
+        category: item.category,
+        brand: item.brand || 'Unknown', // Default brand if not provided
+        image: item.image || '/default-fallback-image.png', // Use fallback image if null
+        attributes: item.attributes ? Object.entries(item.attributes).map(([key, value]) => ({
+          name: key,
+          value: String(value),
+          type: key === 'color' ? 'color' : key === 'size' ? 'size' : 'other' as const
+        })) : [],
+        inStock: item.inStock,
+        rating: item.rating,
+        reviews: item.reviews,
+        createdAt: item.createdAt,
+        updatedAt: item.updatedAt,
+        active: item.active,
+        featured: item.featured,
+        featureStart: item.featureStart,
+        featureEnd: item.featureEnd,
+        availableQuantity: item.availableQuantity
+      }));
+
+      return {
+        success: true,
+        message: 'Related products fetched successfully',
+        products
+      };
+    } catch (error) {
+      console.error('Error fetching related products:', error);
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : 'Failed to fetch related products',
+        products: []
       };
     }
   }

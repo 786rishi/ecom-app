@@ -1,0 +1,144 @@
+/* Testimonial Form Styles */
+
+.testimonial-form-section {
+  margin-top: 3rem;
+}
+
+.testimonial-form-section .card {
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.testimonial-form-section .card-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  border-bottom: none;
+  padding: 1.5rem;
+}
+
+.testimonial-form-section .card-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.rating-select {
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.95rem;
+}
+
+.rating-select:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+
+.star-display {
+  font-size: 1.8rem;
+  color: #ffc107;
+  letter-spacing: 0.2em;
+  font-weight: bold;
+}
+
+.comment-textarea {
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 1rem;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  resize: vertical;
+  min-height: 150px;
+}
+
+.comment-textarea:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+
+.comment-textarea::placeholder {
+  color: #999;
+  font-style: italic;
+}
+
+.submit-button {
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 6px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  transition: all 0.3s ease;
+}
+
+.submit-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.submit-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.form-label {
+  color: #333;
+  margin-bottom: 0.75rem;
+}
+
+.form-text {
+  display: block;
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+}
+
+/* Alert Styling */
+.alert {
+  border-radius: 6px;
+  border: none;
+  margin-bottom: 1.5rem;
+}
+
+.alert-success {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.alert-danger {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+.alert-info {
+  background-color: #d1ecf1;
+  color: #0c5460;
+}
+
+.alert-warning {
+  background-color: #fff3cd;
+  color: #856404;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .testimonial-form-section .card-body {
+    padding: 1.5rem;
+  }
+
+  .d-flex.align-items-center.gap-3 {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .rating-select {
+    width: 100% !important;
+    max-width: none;
+  }
+
+  .star-display {
+    margin-top: 0.5rem;
+  }
+
+  .submit-button {
+    width: 100%;
+  }
+}

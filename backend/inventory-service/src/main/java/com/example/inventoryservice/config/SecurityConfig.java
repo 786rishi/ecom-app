@@ -1,8 +1,9 @@
-package com.example.userservice.config;
+package com.example.inventoryservice.config;
 
-import com.example.userservice.convertor.KeycloakRoleConverter;
+import com.example.inventoryservice.convertor.KeycloakRoleConverter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.oauth2.core.OAuth2TokenValidator;
@@ -14,27 +15,17 @@ import org.springframework.security.web.SecurityFilterChain;
 public class SecurityConfig {
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-
-                        // PUBLIC
-                        .requestMatchers("/public/**").permitAll()
-
-                        // USER APIs
-                        .requestMatchers("/users/me").hasAnyRole("USER", "ADMIN")
-
-                        // ADMIN APIs
-                        .requestMatchers("/admin/**").hasRole("ADMIN")
-
+                        .requestMatchers("/inventory/**").permitAll() // default
+                        .requestMatchers(HttpMethod.POST, "/inventory/add/**").hasRole("ADMIN") // 🔥 restrict
                         .anyRequest().authenticated()
                 )
                 .oauth2ResourceServer(oauth -> oauth
-                        .jwt(jwt -> jwt
-                                .jwtAuthenticationConverter(new KeycloakRoleConverter())
-                        )
+                        .jwt(jwt -> jwt.jwtAuthenticationConverter(new KeycloakRoleConverter()))
                 );
 
         return http.build();
@@ -48,7 +39,7 @@ public class SecurityConfig {
         OAuth2TokenValidator<Jwt> withIssuer =
                 JwtValidators.createDefaultWithIssuer("http://localhost:8080/realms/master");
 
-        decoder.setJwtValidator(withIssuer); // ❌ no audience validation
+        decoder.setJwtValidator(withIssuer);
 
         return decoder;
     }

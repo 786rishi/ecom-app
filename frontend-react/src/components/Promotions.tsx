@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Table, Button, Alert, Spinner, Form, Badge, Modal } from 'react-bootstrap';
 import { useAuth } from '../contexts/AuthContext';
+import keycloak from '../services/keycloak';
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
 
@@ -107,6 +108,8 @@ const Promotions: React.FC = () => {
     try {
       const updatedPromotion = editingPromotion[promotionId];
       if (!updatedPromotion) return;
+
+      await keycloak.updateToken(30);
 
       const response = await fetch(`${API_BASE_URL}/promotions/admin/promotions/${promotionId}/status?active=${updatedPromotion.active}`, {
         method: 'PATCH',
@@ -218,6 +221,8 @@ const Promotions: React.FC = () => {
         // Always include conditions for BOGO, even if empty
         promotionData.conditions = newPromotion.conditions || { buy: 0, get: 0 };
       }
+
+      await keycloak.updateToken(30);
 
       const response = await fetch(`${API_BASE_URL}/promotions/admin/promotions`, {
         method: 'POST',

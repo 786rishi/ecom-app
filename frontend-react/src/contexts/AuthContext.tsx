@@ -177,6 +177,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
             // Use the token parsed data to create user profile
             const tokenParsed = keycloak.tokenParsed as any;
+
+            const realmRoles = tokenParsed?.realm_access?.roles || [];
+            const clientRoles = tokenParsed?.resource_access?.["fb-login"]?.roles || [];
+
             const user: User = {
               id: tokenParsed?.sub || keycloak.subject || '',
               email: tokenParsed?.email || '',
@@ -184,7 +188,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
               preferredUsername: tokenParsed?.preferred_username,
               givenName: tokenParsed?.given_name,
               familyName: tokenParsed?.family_name,
-              roles: tokenParsed?.realm_access?.roles || []
+              roles: [...realmRoles, ...clientRoles]  //tokenParsed?.realm_access?.roles || []
             };
 
             console.log("User loaded from token", user);

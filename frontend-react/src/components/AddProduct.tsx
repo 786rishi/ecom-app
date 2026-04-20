@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Container, Form, Button, Alert, Row, Col, Card, Dropdown, InputGroup } from 'react-bootstrap';
 import { useAuth } from '../contexts/AuthContext';
+import keycloak from '../services/keycloak';
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
 
@@ -251,6 +252,8 @@ const AddProduct: React.FC = () => {
         attributes: formData.attributes,
         image: formData.image
       };
+
+      await keycloak.updateToken(30);
 
       const response = await fetch(`${API_BASE_URL}/products/products`, {
         method: 'POST',

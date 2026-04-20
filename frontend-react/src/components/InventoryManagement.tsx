@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Table, Button, Alert, Spinner, Form } from 'react-bootstrap';
 import { useAuth } from '../contexts/AuthContext';
+import keycloak from '../services/keycloak';
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
 
@@ -66,6 +67,7 @@ const InventoryManagement: React.FC = () => {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${auth.keycloak?.token}`
         },
       });
 
@@ -85,12 +87,16 @@ const InventoryManagement: React.FC = () => {
   // Update inventory
   const updateInventory = async (productId: string, quantity: number) => {
     try {
+
+      await keycloak.updateToken(30);
+
       const response = await fetch(
         `${API_BASE_URL}/inventory/inventory/add?productId=${productId}&quantity=${quantity}`,
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${auth.keycloak?.token}`
           },
         }
       );

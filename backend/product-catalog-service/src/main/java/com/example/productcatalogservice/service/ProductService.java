@@ -129,7 +129,7 @@ public class ProductService {
     }
 
     public Page<Product> getAll(Pageable pageable) {
-        return repository.findAll(pageable);
+        return repository.findByActiveTrue(pageable);
     }
 
     public Product getById(String id) {

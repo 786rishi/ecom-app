@@ -4,6 +4,8 @@ import { Product } from '../types/product';
 import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
 import ProtectedComponent from './ProtectedComponent';
+import AdminProtectedComponent from './AdminProtectedComponent';
+import { productService } from '../services/productService';
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
 
@@ -13,6 +15,7 @@ interface ProductCardProps {
   showAddToCart?: boolean;
   showWishlist?: boolean;
   className?: string;
+  onProductDelete?: (productId: string) => void;
 }
 
 const ProductCard: React.FC<ProductCardProps> = ({
@@ -20,7 +23,8 @@ const ProductCard: React.FC<ProductCardProps> = ({
   onProductClick,
   showAddToCart = false,
   showWishlist = false,
-  className = ''
+  className = '',
+  onProductDelete
 }) => {
 
   const { addToCart } = useCart();
@@ -28,6 +32,9 @@ const ProductCard: React.FC<ProductCardProps> = ({
   const [showToast, setShowToast] = React.useState(false);
   const [showWishlistToast, setShowWishlistToast] = React.useState(false);
   const [wishlistLoading, setWishlistLoading] = React.useState(false);
+  const [deleteLoading, setDeleteLoading] = React.useState(false);
+
+  const enableProductDelete = process.env.REACT_APP_ENABLE_PRODUCT_DELETE === 'true';
 
   const handleCardClick = () => {
     if (onProductClick) {
@@ -77,6 +84,26 @@ const ProductCard: React.FC<ProductCardProps> = ({
     }
   };
 
+  const handleDeleteProduct = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!product.id) return;
+
+    try {
+      setDeleteLoading(true);
+      await productService.deleteProduct(product.id);
+      
+      // Notify parent component to remove the product from UI
+      if (onProductDelete) {
+        onProductDelete(product.id);
+      }
+    } catch (error) {
+      console.error('Failed to delete product:', error);
+      // Optionally show error toast
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
   return (
     <>
       <Card
@@ -92,6 +119,36 @@ const ProductCard: React.FC<ProductCardProps> = ({
             style={{ height: '200px', objectFit: 'cover' }}
           />
           
+          {/* Delete Icon - Only visible to admin users when ENABLE_PRODUCT_DELETE is true */}
+          {enableProductDelete && (
+            <AdminProtectedComponent>
+              <Button
+                variant="danger"
+                className="position-absolute top-0 start-0 m-2 p-2"
+                style={{ 
+                  width: 'auto', 
+                  height: 'auto',
+                  zIndex: 10,
+                  backgroundColor: 'transparent',
+                  border: 'none',
+                  color: 'black',
+                  padding: '4px 8px'
+                }}
+                onClick={handleDeleteProduct}
+                disabled={deleteLoading}
+                title="Delete Product"
+              >
+                {deleteLoading ? (
+                  <div className="spinner-border spinner-border-sm" role="status" style={{ color: 'black' }}>
+                    <span className="visually-hidden">Loading...</span>
+                  </div>
+                ) : (
+                  <span style={{ fontSize: '18px', color: 'black' }}>×</span>
+                )}
+              </Button>
+            </AdminProtectedComponent>
+          )}
+
           {/* Wishlist Icon - Always visible for authenticated users */}
           {showWishlist && (
             <ProtectedComponent>

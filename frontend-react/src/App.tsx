@@ -65,8 +65,7 @@ function AppContent() {
   }, []);
 
   const hookReturn = useProducts();
-  const { products, allProducts, loading, error, searchQuery, pagination, updatePage, updatePageSize, clearFilters, stateVersion } = hookReturn;
-
+  const { products, allProducts, loading, error, searchQuery, pagination, updatePage, updatePageSize, clearFilters, stateVersion, refetch } = hookReturn;
 
   // Check if products array reference changed
   const productsChanged = lastRenderProducts !== products;
@@ -120,6 +119,17 @@ function AppContent() {
   const handleProductClick = (product: Product) => {
     setSelectedProduct(product);
     setAppState('product-details');
+  };
+
+  const handleProductDelete = async (productId: string) => {
+    // Make a fresh API call to reload products after deletion
+    try {
+      await refetch();
+      // Force re-render to ensure UI updates with fresh data
+      setForceRender(prev => prev + 1);
+    } catch (error) {
+      console.error('Error refreshing products after deletion:', error);
+    }
   };
 
   const handleSearchClear = () => {
@@ -302,8 +312,8 @@ function AppContent() {
         // Redirect non-authenticated users to main
         setAppState('main');
         window.location.hash = '';
-      } else if (hash === 'product' || hash === 'Inventory' || hash === 'promotions') {
-        // Redirect non-admin users to browse
+      } else if ((hash === 'product' || hash === 'Inventory' || hash === 'promotions') && auth.isAuthenticated && !auth.user?.roles?.includes('admin')) {
+        // Redirect non-admin authenticated users to browse
         setAppState('browse');
         window.location.hash = '';
       }
@@ -556,14 +566,16 @@ function AppContent() {
           onAdvancedFilterClick={handleAdvancedFilterClick}
           onClearAdvancedFilters={handleFiltersClear}
           onSearch={handleSearch}
+          // hasActiveFilters={isAdvancedFilterActive}
         />
 
         {/* Featured Products Carousel - Only show when no search is active */}
-          <FeaturedProductsCarousel
-            onProductClick={handleProductClick}
-            showAddToCart={auth.isAuthenticated}
-            showWishlist={auth.isAuthenticated}
-          />
+        <FeaturedProductsCarousel
+          onProductClick={handleProductClick}
+          onProductDelete={handleProductDelete}
+          showAddToCart={auth.isAuthenticated}
+          showWishlist={auth.isAuthenticated}
+        />
 
         <Container fluid className="py-4">
 
@@ -574,17 +586,6 @@ function AppContent() {
               <p>{error}</p>
             </Alert>
           )}
-
-          {/* Search Results Header */}
-          {/* <SearchResults
-            products={products}
-            allProducts={allProducts}
-            query={searchQuery}
-            loading={loading}
-            onClearSearch={handleSearchClear}
-            onSuggestionClick={handleSuggestionClick}
-            className="mb-4"
-          /> */}
 
           {/* Loading Spinner - show when loading or clearing filters */}
           {isLoading && (
@@ -602,6 +603,7 @@ function AppContent() {
                 <ProductGrid
                   products={displayProducts || []}
                   onProductClick={handleProductClick}
+                  onProductDelete={handleProductDelete}
                   showAddToCart={auth.isAuthenticated}
                   showWishlist={auth.isAuthenticated}
                   loading={isLoading}

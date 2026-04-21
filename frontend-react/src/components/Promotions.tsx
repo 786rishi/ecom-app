@@ -8,7 +8,7 @@ const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
 interface Promotion {
   id: string;
   name: string;
-  type: 'PERCENTAGE' | 'FLAT' | 'BOGO';
+  type: 'PERCENTAGE' | 'FLAT';
   discountValue: number | null;
   minOrderAmount: number | null;
   couponCode: string | null;
@@ -175,17 +175,6 @@ const Promotions: React.FC = () => {
     }));
   };
 
-  // Handle BOGO conditions change separately
-  const handleBOGOConditionsChange = (field: 'buy' | 'get', value: number) => {
-    setNewPromotion(prev => ({
-      ...prev,
-      conditions: {
-        ...(prev.conditions || { buy: 0, get: 0 }),
-        [field]: value
-      }
-    }));
-  };
-
   // Handle save new promotion
   const handleSaveNewPromotion = async () => {
     try {
@@ -310,9 +299,7 @@ const Promotions: React.FC = () => {
       return `${promotion.discountValue}%`;
     } else if (promotion.type === 'FLAT' && promotion.discountValue) {
       return `$${promotion.discountValue}`;
-    } else if (promotion.type === 'BOGO' && promotion.conditions) {
-      return `Buy ${promotion.conditions.buy} Get ${promotion.conditions.get}`;
-    }
+    } 
     return '-';
   };
 
@@ -517,7 +504,6 @@ const Promotions: React.FC = () => {
               >
                 <option value="PERCENTAGE">Percentage Discount</option>
                 <option value="FLAT">Flat Discount (Coupon-based)</option>
-                <option value="BOGO">Buy One Get One</option>
               </Form.Select>
             </Form.Group>
 
@@ -582,33 +568,6 @@ const Promotions: React.FC = () => {
                   />
                 </Form.Group>
               </>
-            )}
-
-            {newPromotion.type === 'BOGO' && (
-              <Form.Group className="mb-3">
-                <Form.Label>BOGO Conditions</Form.Label>
-                <div className="d-flex gap-2 align-items-center">
-                  <span>Buy</span>
-                  <Form.Control
-                    type="number"
-                    value={newPromotion.conditions?.buy || ''}
-                    onChange={(e) => handleBOGOConditionsChange('buy', parseInt(e.target.value) || 0)}
-                    placeholder="2"
-                    min="1"
-                    style={{ width: '80px' }}
-                  />
-                  <span>Get</span>
-                  <Form.Control
-                    type="number"
-                    value={newPromotion.conditions?.get || ''}
-                    onChange={(e) => handleBOGOConditionsChange('get', parseInt(e.target.value) || 0)}
-                    placeholder="1"
-                    min="1"
-                    style={{ width: '80px' }}
-                  />
-                  <span>Free</span>
-                </div>
-              </Form.Group>
             )}
 
             <Form.Group className="mb-3">

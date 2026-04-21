@@ -8,6 +8,7 @@ const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
 interface InventoryItem {
   id: number;
   productId: string;
+  productName: string;
   totalQuantity: number;
   reservedQuantity: number;
   availableQuantity: number;
@@ -37,16 +38,16 @@ const InventoryManagement: React.FC = () => {
   // Custom styles
   const tableRowStyle = (item: InventoryItem): React.CSSProperties => {
     return {
-      backgroundColor: item.totalQuantity < 10 ? '#ffcccc' : 'inherit',
-      color: item.totalQuantity < 10 ? '#dc3545' : 'inherit',
-      fontWeight: item.totalQuantity < 10 ? 'bold' : 'normal'
+      backgroundColor: item.availableQuantity < 10 ? '#ffcccc' : 'inherit',
+      color: item.availableQuantity < 10 ? '#dc3545' : 'inherit',
+      fontWeight: item.availableQuantity < 10 ? 'bold' : 'normal'
     };
   };
 
   // Sort inventory by total quantity
   const sortInventory = (order: 'asc' | 'desc') => {
     const sorted = [...inventory].sort((a, b) => {
-      return order === 'asc' ? a.totalQuantity - b.totalQuantity : b.totalQuantity - a.totalQuantity;
+      return order === 'asc' ? a.availableQuantity - b.availableQuantity : b.availableQuantity - a.availableQuantity;
     });
     setSortedInventory(sorted);
     setSortOrder(order);
@@ -206,7 +207,8 @@ const InventoryManagement: React.FC = () => {
           <thead>
             <tr>
               <th>Product ID</th>
-              <th>Available Quantity</th>
+              <th>Product Name</th>
+              {/* <th>Available Quantity</th> */}
               <th>
                 Total Quantity
                 <Button
@@ -219,7 +221,6 @@ const InventoryManagement: React.FC = () => {
                   {sortOrder === 'asc' ? '↓' : '↑'}
                 </Button>
               </th>
-              <th>Reserved Quantity</th>
               <th>Updated At</th>
               <th>Action</th>
             </tr>
@@ -235,20 +236,22 @@ const InventoryManagement: React.FC = () => {
               sortedInventory.map((item) => (
                 <tr key={item.id} style={tableRowStyle(item)}>
                   <td>{item.productId}</td>
-                  <td>{item.availableQuantity}</td>
+                  <td>{item.productName}</td>
+                  {/* <td>{item.availableQuantity}</td> */}
                   <td>
                     {editingItem?.id === item.id ? (
                       <Form.Control
                         type="number"
                         value={editingItem.totalQuantity}
+                        placeholder='Enter Quantity To Add'
                         onChange={(e) => handleQuantityChange(e.target.value)}
-                        style={{ width: '100px' }}
+                        style={{ width: '80%', margin: '0 auto' }}
                       />
                     ) : (
-                      item.totalQuantity
+                      item.availableQuantity
                     )}
                   </td>
-                  <td>{item.reservedQuantity}</td>
+                {/*   <td>{item.reservedQuantity}</td> */}
                   <td>{new Date(item.updatedAt).toLocaleString()}</td>
                   <td>
                     {editingItem?.id === item.id ? (

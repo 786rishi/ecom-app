@@ -1,11 +1,11 @@
 package com.example.promotionservice.service;
 
+import com.example.promotionservice.client.OrderClient;
 import com.example.promotionservice.dto.CartRequest;
 import com.example.promotionservice.dto.PromotionResponse;
 import com.example.promotionservice.entity.Promotion;
 import com.example.promotionservice.enums.PromotionType;
 import com.example.promotionservice.repository.PromotionRepository;
-import com.example.promotionservice.ruleengine.BogoPromotionRule;
 import com.example.promotionservice.ruleengine.FlatPromotionRule;
 import com.example.promotionservice.ruleengine.PercentagePromotionRule;
 import com.example.promotionservice.ruleengine.PromotionRule;
@@ -23,7 +23,7 @@ public class PromotionService {
 
     private final PercentagePromotionRule percentageRule;
     private final FlatPromotionRule flatRule;
-    private final BogoPromotionRule bogoRule;
+    private final OrderClient orderClient;
 
     public PromotionResponse applyPromotions(CartRequest cart) {
 
@@ -31,6 +31,8 @@ public class PromotionService {
 
         double totalDiscount = 0;
         List<String> applied = new ArrayList<>();
+
+       // boolean couponApplied = false;
 
         for (Promotion promo : promotions) {
 
@@ -40,14 +42,24 @@ public class PromotionService {
                 continue;
             }
 
+//            if (couponApplied) {
+//                continue;
+//            }
+
             PromotionRule rule = getRule(promo.getType());
 
             if (rule.isApplicable(cart, promo)) {
                 double discount = rule.apply(cart, promo);
                 totalDiscount += discount;
                 applied.add(promo.getName());
+               // couponApplied = true;
+            }
+            else {
+                throw new RuntimeException("Coupon can not be applied");
             }
         }
+
+        orderClient.updateCart(cart.getUserId(), totalDiscount);
 
         return PromotionResponse.builder()
                 .originalAmount(cart.getTotalAmount())
@@ -61,7 +73,6 @@ public class PromotionService {
         return switch (type) {
             case PERCENTAGE -> percentageRule;
             case FLAT -> flatRule;
-            case BOGO -> bogoRule;
         };
     }
 }

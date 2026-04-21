@@ -99,7 +99,6 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ show, onHide }) => {
       // Step 1: Checkout
       const checkoutResult = await orderService.checkout(auth.user.id);
       
-      
       if (!checkoutResult.success) {
         throw new Error(checkoutResult.message || 'Checkout failed');
       }

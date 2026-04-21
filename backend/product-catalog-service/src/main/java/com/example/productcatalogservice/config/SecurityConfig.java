@@ -20,8 +20,9 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/products/**").permitAll() // default
-                        .requestMatchers(HttpMethod.POST, "/products/**").hasRole("ADMIN") // 🔥 restrict
+                        .requestMatchers("/products/**").permitAll()
+                        .requestMatchers("/products/ids").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/products").hasRole("ADMIN") // 🔥 restrict
                         .anyRequest().authenticated()
                 )
                 .oauth2ResourceServer(oauth -> oauth

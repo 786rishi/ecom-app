@@ -93,4 +93,14 @@ public class CartService {
 
         return repository.save(cart);
     }
+
+    @Transactional("cartTransactionManager")
+    public Cart updateCartDiscount(String userId, Double discount) {
+
+        Cart cart = repository.findFirstByUserId(userId)
+                .orElseThrow(() -> new RuntimeException("Cart not found"));
+
+        cart.setDiscount(discount);
+        return repository.save(cart);
+    }
 }

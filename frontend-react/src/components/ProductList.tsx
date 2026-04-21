@@ -117,7 +117,7 @@ const ProductList: React.FC<ProductListProps> = ({
         >
           <div className="d-flex align-items-center">
             <Image 
-              src={product.image} 
+              src={product.image || 'https://via.placeholder.com/300x200?text=No+Image'}  
               alt={product.name}
               rounded
               style={{ 

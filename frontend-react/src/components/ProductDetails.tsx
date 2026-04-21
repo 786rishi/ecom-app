@@ -130,7 +130,7 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({
                   onMouseLeave={handleMouseLeave}
                 >
                   <img
-                    src={currentImage}
+                    src={currentImage || 'https://via.placeholder.com/300x200?text=No+Image'}
                     alt={product.name}
                     className="img-fluid"
                     style={{

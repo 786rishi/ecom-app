@@ -10,6 +10,7 @@ public class OrderResponse {
     private Long id;
     private String userId;
     private Double totalAmount;
+    private Double discount;
     private String status;
     private LocalDateTime createdAt;
 

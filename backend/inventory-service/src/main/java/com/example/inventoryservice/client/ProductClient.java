@@ -1,10 +1,10 @@
 package com.example.inventoryservice.client;
 
+import com.example.inventoryservice.dto.Product;
 import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @FeignClient(name = "product-service", url = "http://localhost:8084")
 public interface ProductClient {
@@ -16,4 +16,8 @@ public interface ProductClient {
     void updateInventory(
             @RequestParam("productId") String productId,
             @RequestParam("availableQuantity") int availableQuantity);
+
+    @PostMapping("/products/ids")
+    List<Product> getByIds(@RequestBody List<String> productIds);
+
 }

@@ -26,6 +26,12 @@ public class CartController {
         return cartService.updateCartItem(userId, productId, quantity);
     }
 
+    @PutMapping("/cart/update/discount")
+    public Cart updateCart(@RequestParam("userId") String userId,
+                           @RequestParam("discount") Double discount) {
+        return cartService.updateCartDiscount(userId, discount);
+    }
+
 
     @GetMapping("/cart/{userId}")
     public Cart getCart(@PathVariable("userId") String userId) {

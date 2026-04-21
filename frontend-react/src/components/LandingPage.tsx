@@ -1,6 +1,7 @@
 import React from 'react';
 import { Container, Row, Col, Card, Button } from 'react-bootstrap';
 import { useAuth } from '../contexts/AuthContext';
+import Footer from './Footer';
 
 interface LandingPageProps {
   onLogin: () => void;
@@ -30,7 +31,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onBrowseAsGuest, onA
         <Container>
           <Row className="align-items-center">
             <Col md={6}>
-              <h1 className="display-4 fw-bold mb-4">🛍️ Welcome to E-Commerce Store</h1>
+              <h1 className="display-4 fw-bold mb-4">🛍️ Welcome to Mcart Store</h1>
               <p className="lead mb-4">
                 Discover amazing products at great prices. Shop with confidence and enjoy a seamless shopping experience.
               </p>
@@ -153,7 +154,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onBrowseAsGuest, onA
       </Container>
 
       {/* Demo Credentials */}
-      <Container className="py-4">
+      {/* <Container className="py-4">
         <Card className="bg-info text-white border-0">
           <Card.Body className="text-center">
             <Card.Title as="h5" className="mb-3">Demo Account</Card.Title>
@@ -165,7 +166,8 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onBrowseAsGuest, onA
             </p>
           </Card.Body>
         </Card>
-      </Container>
+      </Container> */}
+      <Footer></Footer>
     </div>
   );
 };

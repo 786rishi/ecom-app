@@ -1,3 +1,4 @@
+import { debug } from 'console';
 import { CartItem } from '../contexts/CartContext';
 import { Product } from '../types/product';
 
@@ -164,6 +165,7 @@ class OrderService {
         } as CheckoutRequest)
       });
 
+      debugger
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }

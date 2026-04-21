@@ -119,7 +119,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
         <div className="position-relative">
           <Card.Img
             variant="top"
-            src={product.image}
+            src={product.image || 'https://via.placeholder.com/300x200?text=No+Image'}
             alt={product.name}
             style={{ height: '200px', objectFit: 'cover' }}
           />

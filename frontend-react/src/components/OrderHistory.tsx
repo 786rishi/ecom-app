@@ -36,6 +36,7 @@ interface Order {
   id: number;
   userId: string;
   totalAmount: number;
+  discount: number;
   status: string;
   paymentId: string | null;
   createdAt: string;
@@ -307,6 +308,12 @@ const OrderHistory: React.FC = () => {
                       ))}
                     </tbody>
                     <tfoot>
+                      {order.discount && (
+                        <tr>
+                          <td colSpan={4} className="text-end">Discount:</td>
+                          <td>-{formatCurrency(order.discount)}</td>
+                        </tr>
+                      )}
                       <tr>
                         <td colSpan={4} className="text-end fw-bold">Order Total:</td>
                         <td className="fw-bold text-success">{formatCurrency(order.totalAmount)}</td>

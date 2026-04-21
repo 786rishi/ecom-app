@@ -58,11 +58,11 @@ function AppContent() {
   const [advancedFilterPagination, setAdvancedFilterPagination] = useState<any>(null);
 
   // Register callback to be called when hook state changes
-  React.useEffect(() => {
-    setStateChangeCallback(() => {
-      setForceRender(prev => prev + 1);
-    });
-  }, []);
+  // React.useEffect(() => {
+  //   setStateChangeCallback(() => {
+  //     setForceRender(prev => prev + 1);
+  //   });
+  // }, []);
 
   const hookReturn = useProducts();
   const { products, allProducts, loading, error, searchQuery, pagination, updatePage, updatePageSize, clearFilters, stateVersion, refetch } = hookReturn;
@@ -218,36 +218,60 @@ function AppContent() {
     }
   };
 
-  const handleFiltersClear = async () => {
-    try {
-      // Step 1: Clear the loaded products list immediately
-      setFilteredProducts(null);
-      setIsAdvancedFilterActive(false);
-      setAdvancedFilterPagination(null);
+  // const handleFiltersClear = async () => {
+  //   try {
+  //     // Step 1: Clear the loaded products list immediately
+  //     setFilteredProducts(null);
+  //     setIsAdvancedFilterActive(false);
+  //     setAdvancedFilterPagination(null);
 
-      // Step 2: Set loading to true to show loader
-      setClearFiltersLoading(true);
+  //     // Step 2: Set loading to true to show loader
+  //     setClearFiltersLoading(true);
 
-      // Step 3: Clear filter states
-      setCurrentFilters({});
+  //     // Step 3: Clear filter states
+  //     setCurrentFilters({});
 
-      // Step 4: Use hook's clearFilters function to fetch fresh data
-      const { clearFilters } = hookReturn;
-      clearFilters();
+  //     // Step 4: Use hook's clearFilters function to fetch fresh data
+  //     const { clearFilters } = hookReturn;
+  //     clearFilters();
 
-      // Step 5: Wait for the hook to complete the API call
-      await new Promise(resolve => setTimeout(resolve, 500));
+  //     // Step 5: Wait for the hook to complete the API call
+  //     await new Promise(resolve => setTimeout(resolve, 500));
 
-      // Step 6: Force component re-render to ensure UI updates with fresh data
-      setForceRender(prev => prev + 1);
+  //     // Step 6: Force component re-render to ensure UI updates with fresh data
+  //     setForceRender(prev => prev + 1);
 
-    } catch (error) {
-      console.error('Error clearing filters:', error);
-    } finally {
-      // Step 7: Hide loader
-      setClearFiltersLoading(false);
-    }
-  };
+  //   } catch (error) {
+  //     console.error('Error clearing filters:', error);
+  //   } finally {
+  //     // Step 7: Hide loader
+  //     setClearFiltersLoading(false);
+  //   }
+  // };
+
+const handleFiltersClear = async () => {
+  try {
+    setClearFiltersLoading(true);
+
+    // 1. Reset UI states
+    setFilteredProducts(null);
+    setIsAdvancedFilterActive(false);
+    setAdvancedFilterPagination(null);
+    setCurrentFilters({});
+
+    // 2. Clear search/filter in hook
+    clearFilters();
+
+    // 3. Fetch fresh data
+    await refetch();
+
+  } catch (error) {
+    console.error('Error clearing filters:', error);
+  } finally {
+    setClearFiltersLoading(false);
+  }
+};
+
 
   const handleAdvancedFilterClick = () => {
     setShowAdvancedFilter(true);
@@ -257,19 +281,35 @@ function AppContent() {
     setShowAdvancedFilter(false);
   };
 
-  const handleSearch = (query: string) => {
-    // Clear advanced filter state if doing a new search
-    if (query.trim() !== '') {
-      setFilteredProducts(null);
-      setIsAdvancedFilterActive(false);
-      setAdvancedFilterPagination(null);
-      setCurrentFilters({});
-    }
+  // const { updateSearchQuery } = hookReturn;
 
-    // Use hook's updateSearchQuery function directly - let the hook handle loading
-    const { updateSearchQuery } = hookReturn;
-    updateSearchQuery(query);
-  };
+  // const handleSearch = (query: string) => {
+  //   // Clear advanced filter state if doing a new search
+  //   if (query.trim() !== '') {
+  //     setFilteredProducts(null);
+  //     setIsAdvancedFilterActive(false);
+  //     setAdvancedFilterPagination(null);
+  //     setCurrentFilters({});
+  //   }
+
+  //   // Use hook's updateSearchQuery function directly - let the hook handle loading
+  //   updateSearchQuery(query);
+  // };
+
+const { updateSearchQuery } = hookReturn;
+
+const handleSearch = (query: string) => {
+  if (query === searchQuery) return;
+
+  if (query.trim() !== '') {
+    setFilteredProducts(null);
+    setIsAdvancedFilterActive(false);
+    setAdvancedFilterPagination(null);
+    setCurrentFilters({});
+  }
+
+  updateSearchQuery(query);
+};
 
   // Listen for login success event
   React.useEffect(() => {

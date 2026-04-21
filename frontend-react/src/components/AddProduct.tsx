@@ -213,14 +213,64 @@ const AddProduct: React.FC = () => {
     }
   };
 
-  const handleAttributeChange = (key: string, value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      attributes: {
-        ...prev.attributes,
-        [key]: value
+  const handleAttributeChange = (index: number, field: 'key' | 'value', value: string) => {
+    const attributeEntries = Object.entries(formData.attributes);
+    const updatedEntries = [...attributeEntries];
+    
+    if (index >= updatedEntries.length) {
+      // Add new attribute if index doesn't exist
+      updatedEntries.push([field === 'key' ? value : '', field === 'value' ? value : '']);
+    } else {
+      // Update existing attribute
+      const [currentKey, currentValue] = updatedEntries[index];
+      if (field === 'key') {
+        updatedEntries[index] = [value, currentValue];
+      } else {
+        updatedEntries[index] = [currentKey, value];
       }
-    }));
+    }
+    
+    // Convert back to attributes object, filtering out empty keys
+    const newAttributes: { [key: string]: string } = {};
+    updatedEntries.forEach(([key, val]) => {
+      if (key.trim()) {
+        newAttributes[key] = val;
+      }
+    });
+    
+    setFormData(prev => ({ ...prev, attributes: newAttributes }));
+  };
+
+  const addAttributeRow = () => {
+    const currentEntries = Object.entries(formData.attributes);
+    // Add an empty attribute row
+    const newAttributes = { ...formData.attributes };
+    newAttributes[''] = '';
+    setFormData(prev => ({ ...prev, attributes: newAttributes }));
+  };
+
+  const removeAttributeRow = (index: number) => {
+    const attributeEntries = Object.entries(formData.attributes);
+    const updatedEntries = attributeEntries.filter((_, i) => i !== index);
+    
+    // Convert back to attributes object
+    const newAttributes: { [key: string]: string } = {};
+    updatedEntries.forEach(([key, val]) => {
+      if (key.trim()) {
+        newAttributes[key] = val;
+      }
+    });
+    
+    setFormData(prev => ({ ...prev, attributes: newAttributes }));
+  };
+
+  const getAttributeEntries = () => {
+    const entries = Object.entries(formData.attributes);
+    // Ensure at least one empty row if no attributes exist
+    if (entries.length === 0) {
+      return [['', '']];
+    }
+    return entries;
   };
 
   const handleImageChange = (value: string) => {
@@ -441,38 +491,46 @@ const AddProduct: React.FC = () => {
 
             <Form.Group className="mb-3">
               <Form.Label>Attributes (flexible key-value pairs)</Form.Label>
-              <Row>
-                <Col md={4}>
-                  <Form.Control
-                    type="text"
-                    placeholder="Attribute name (e.g., color)"
-                    value={Object.keys(formData.attributes)[0] || ''}
-                    onChange={(e) => {
-                      const oldKey = Object.keys(formData.attributes)[0];
-                      const oldValue = formData.attributes[oldKey] || '';
-                      const newAttributes = { ...formData.attributes };
-                      if (oldKey) delete newAttributes[oldKey];
-                      if (e.target.value) {
-                        newAttributes[e.target.value] = oldValue;
-                      }
-                      setFormData(prev => ({ ...prev, attributes: newAttributes }));
-                    }}
-                  />
-                </Col>
-                <Col md={4}>
-                  <Form.Control
-                    type="text"
-                    placeholder="Attribute value (e.g., red)"
-                    value={Object.values(formData.attributes)[0] || ''}
-                    onChange={(e) => {
-                      const key = Object.keys(formData.attributes)[0];
-                      if (key) {
-                        handleAttributeChange(key, e.target.value);
-                      }
-                    }}
-                  />
-                </Col>
-              </Row>
+              {getAttributeEntries().map(([key, value], index) => (
+                <Row key={index} className="mb-2">
+                  <Col md={4}>
+                    <Form.Control
+                      type="text"
+                      placeholder="Attribute name (e.g., color)"
+                      value={key}
+                      onChange={(e) => handleAttributeChange(index, 'key', e.target.value)}
+                    />
+                  </Col>
+                  <Col md={4}>
+                    <Form.Control
+                      type="text"
+                      placeholder="Attribute value (e.g., red)"
+                      value={value}
+                      onChange={(e) => handleAttributeChange(index, 'value', e.target.value)}
+                    />
+                  </Col>
+                  <Col md={4}>
+                    <Button
+                      variant="outline-danger"
+                      size="sm"
+                      onClick={() => removeAttributeRow(index)}
+                      disabled={getAttributeEntries().length <= 1}
+                      className="me-2"
+                    >
+                      Remove
+                    </Button>
+                    {index === getAttributeEntries().length - 1 && (
+                      <Button
+                        variant="outline-primary"
+                        size="sm"
+                        onClick={addAttributeRow}
+                      >
+                        Add Attribute
+                      </Button>
+                    )}
+                  </Col>
+                </Row>
+              ))}
             </Form.Group>
 
             <Form.Group className="mb-3">

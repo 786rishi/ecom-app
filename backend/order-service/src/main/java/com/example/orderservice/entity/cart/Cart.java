@@ -16,6 +16,7 @@ public class Cart {
     private Long id;
 
     private String userId;
+    private Double discount;
 
     @OneToMany(mappedBy = "cart", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private List<CartItem> items;

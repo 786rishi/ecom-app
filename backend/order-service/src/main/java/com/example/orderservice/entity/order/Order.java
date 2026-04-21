@@ -20,6 +20,8 @@ public class Order {
     private String userId;
 
     private Double totalAmount;
+    private Double discount;
+    private Double effectiveAmount;
 
     private String status;
     // CREATED, PAYMENT_PENDING, PAID, CONFIRMED, FAILED

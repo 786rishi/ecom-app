@@ -72,6 +72,8 @@ public class OrderService {
 
         order.setItems(orderItems);
         order.setTotalAmount(total);
+        order.setDiscount(cart.getDiscount());
+        order.setEffectiveAmount(total - cart.getDiscount());
 
         return repository.save(order);
     }
@@ -175,7 +177,8 @@ public class OrderService {
             OrderResponse response = new OrderResponse();
             response.setId(order.getId());
             response.setUserId(order.getUserId());
-            response.setTotalAmount(order.getTotalAmount());
+            response.setTotalAmount(order.getEffectiveAmount());
+            response.setDiscount(order.getDiscount());
             response.setStatus(order.getStatus());
             response.setCreatedAt(order.getCreatedAt());
 

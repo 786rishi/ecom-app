@@ -209,7 +209,7 @@ const Wishlist: React.FC<WishlistProps> = ({ setAppState }) => {
                   <tr key={product.id}>
                     <td>
                       <Image
-                        src={product.image || '/placeholder-image.jpg'}
+                        src={product.image || 'https://via.placeholder.com/300x200?text=No+Image'}
                         alt={product.name}
                         rounded
                         style={{

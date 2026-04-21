@@ -33,6 +33,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
   const [showWishlistToast, setShowWishlistToast] = React.useState(false);
   const [wishlistLoading, setWishlistLoading] = React.useState(false);
   const [deleteLoading, setDeleteLoading] = React.useState(false);
+  const [showDeleteToast, setShowDeleteToast] = React.useState(false);
 
   const enableProductDelete = process.env.REACT_APP_ENABLE_PRODUCT_DELETE === 'true';
 
@@ -92,13 +93,17 @@ const ProductCard: React.FC<ProductCardProps> = ({
       setDeleteLoading(true);
       await productService.deleteProduct(product.id);
       
+      // Show success toast notification
+      setShowDeleteToast(true);
+      
       // Notify parent component to remove the product from UI
       if (onProductDelete) {
         onProductDelete(product.id);
       }
     } catch (error) {
       console.error('Failed to delete product:', error);
-      // Optionally show error toast
+      // Show error toast notification
+      setShowDeleteToast(true);
     } finally {
       setDeleteLoading(false);
     }
@@ -269,6 +274,29 @@ const ProductCard: React.FC<ProductCardProps> = ({
           {product.name} has been added to your wishlist.
         </Toast.Body>
       </Toast>
+
+      {/* Delete Toast Notification */}
+      <Toast
+        onClose={() => setShowDeleteToast(false)}
+        show={showDeleteToast}
+        delay={3000}
+        autohide
+        style={{
+          position: 'fixed',
+          top: '20px',
+          right: '20px',
+          zIndex: 9999
+        }}
+      >
+        <Toast.Header>
+          <strong className="me-auto">Product Deleted!</strong>
+          <small>just now</small>
+        </Toast.Header>
+        <Toast.Body>
+          {product.name} has been deleted successfully.
+        </Toast.Body>
+      </Toast>
+
     </>
   );
 };

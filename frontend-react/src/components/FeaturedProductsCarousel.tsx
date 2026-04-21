@@ -32,6 +32,7 @@ const FeaturedProductsCarousel: React.FC<FeaturedProductsCarouselProps> = ({
   const { auth } = useAuth();
   const [showToast, setShowToast] = useState(false);
   const [showWishlistToast, setShowWishlistToast] = useState(false);
+  const [showDeleteToast, setShowDeleteToast] = useState(false);
   const [toastProduct, setToastProduct] = useState<Product | null>(null);
   const [wishlistLoading, setWishlistLoading] = useState<string | null>(null);
   const [deleteLoading, setDeleteLoading] = useState<string | null>(null);
@@ -109,6 +110,9 @@ const FeaturedProductsCarousel: React.FC<FeaturedProductsCarouselProps> = ({
       setDeleteLoading(product.id);
       await productService.deleteProduct(product.id);
       
+      // Show success toast notification
+      setShowDeleteToast(true);
+      
       // Remove the deleted product from featured products
       setFeaturedProducts(prev => prev.filter(p => p.id !== product.id));
       
@@ -118,6 +122,8 @@ const FeaturedProductsCarousel: React.FC<FeaturedProductsCarouselProps> = ({
       }
     } catch (error) {
       console.error('Failed to delete product:', error);
+      // Show error toast notification
+      setShowDeleteToast(true);
     } finally {
       setDeleteLoading(null);
     }
@@ -383,6 +389,30 @@ const FeaturedProductsCarousel: React.FC<FeaturedProductsCarouselProps> = ({
           </Toast.Header>
           <Toast.Body>
             {toastProduct.name} has been added to your wishlist.
+          </Toast.Body>
+        </Toast>
+      )}
+
+      {/* Delete Toast Notification */}
+      {showDeleteToast && (
+        <Toast
+          onClose={() => setShowDeleteToast(false)}
+          show={showDeleteToast}
+          delay={3000}
+          autohide
+          style={{
+            position: 'fixed',
+            top: '140px',
+            right: '20px',
+            zIndex: 9999
+          }}
+        >
+          <Toast.Header>
+            <strong className="me-auto">Product Deleted!</strong>
+            <small>just now</small>
+          </Toast.Header>
+          <Toast.Body>
+            Product has been deleted successfully.
           </Toast.Body>
         </Toast>
       )}

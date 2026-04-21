@@ -6,9 +6,10 @@ import com.example.productcatalogservice.exception.ProductNotFoundException;
 import com.example.productcatalogservice.model.Product;
 import com.example.productcatalogservice.model.ProductTestimonial;
 import com.example.productcatalogservice.repository.ProductRepository;
-import org.opensearch.index.query.MoreLikeThisQueryBuilder;
+import org.opensearch.common.unit.Fuzziness;
+import org.opensearch.index.query.*;
 import org.opensearch.index.query.MoreLikeThisQueryBuilder.Item;
-import org.opensearch.index.query.QueryBuilders;import com.example.productcatalogservice.repository.ProductTestimonialRepository;
+import com.example.productcatalogservice.repository.ProductTestimonialRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AllArgsConstructor;
 import org.opensearch.action.index.IndexRequest;
@@ -16,10 +17,8 @@ import org.opensearch.action.search.SearchRequest;
 import org.opensearch.action.search.SearchResponse;
 import org.opensearch.client.RequestOptions;
 import org.opensearch.client.RestHighLevelClient;
-import org.opensearch.index.query.BoolQueryBuilder;
 import org.opensearch.index.query.MoreLikeThisQueryBuilder;
 import org.opensearch.index.query.QueryBuilders;
-import org.opensearch.index.query.RangeQueryBuilder;
 import org.opensearch.search.SearchHit;
 import org.opensearch.search.builder.SearchSourceBuilder;
 import org.opensearch.search.sort.SortOrder;
@@ -101,9 +100,7 @@ public class ProductService {
         jsonMap.put("availableQuantity", product.getAvailableQuantity());
 
         jsonMap.put("attributes", product.getAttributes());
-
-
-
+        jsonMap.put("image", product.getImage());
 
         if (product.getFeatured() != null) {
             jsonMap.put("featured", product.getFeatured());
@@ -156,6 +153,7 @@ public class ProductService {
             SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
 
             BoolQueryBuilder query = QueryBuilders.boolQuery()
+                    .must(QueryBuilders.termQuery("active", true))
                     .must(QueryBuilders.termQuery("featured", true))
                     .filter(QueryBuilders.rangeQuery("featureStart").lte("now"))
                     .filter(QueryBuilders.rangeQuery("featureEnd").gte("now"));
@@ -180,16 +178,48 @@ public class ProductService {
             return new PageImpl<>(result, pageable, totalHits);
         }
 
+//        SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
+//        QueryBuilder query = QueryBuilders.multiMatchQuery(
+//                keyword,
+//                "name",
+//                "description",
+//                "category"
+//        ).fuzziness(Fuzziness.AUTO).operator(Operator.OR);
+//        sourceBuilder.query(
+//                        query
+//        ).from(pageable.getPageNumber() * pageable.getPageSize())
+//                .size(pageable.getPageSize());
+
         SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
-        sourceBuilder.query(
-                QueryBuilders.multiMatchQuery(
-                        keyword,
-                        "name",
-                        "description",
-                        "category"
-                )
-        ).from(pageable.getPageNumber() * pageable.getPageSize())
-                .size(pageable.getPageSize());
+
+        BoolQueryBuilder query = QueryBuilders.boolQuery()
+
+                // 🔹 Fuzzy match (handles typos like "salwa")
+                .should(QueryBuilders.multiMatchQuery(
+                                keyword,
+                                "name",
+                                "description",
+                                "category"
+                        )
+                        .fuzziness(Fuzziness.AUTO)
+                        .prefixLength(1)          // improves fuzzy quality
+                        .operator(Operator.OR)
+                        .boost(2.0f))             // give it weight
+
+                // 🔹 Prefix match (handles partial like "salw")
+                .should(QueryBuilders.multiMatchQuery(
+                                keyword,
+                                "name",
+                                "description",
+                                "category"
+                        )
+                        .type(MultiMatchQueryBuilder.Type.PHRASE_PREFIX)
+                        .boost(3.0f));            // higher priority
+
+        sourceBuilder.query(query)
+                .from(pageable.getPageNumber() * pageable.getPageSize())
+                .size(pageable.getPageSize())
+                .sort("_score", SortOrder.DESC);
 
         long now = System.currentTimeMillis();
 
@@ -248,6 +278,12 @@ public class ProductService {
     public void delete(String id) {
         Product product = getById(id);
         product.setActive(false); // soft delete
+
+        try {
+            indexProduct(product);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
         repository.save(product);
     }
 
@@ -300,7 +336,7 @@ public class ProductService {
             boolQuery.must(QueryBuilders.multiMatchQuery(
                     request.getKeyword(),
                     "name", "description", "category"
-            ));
+            ).fuzziness(Fuzziness.AUTO));
         }
 
         // 🧠 Filters

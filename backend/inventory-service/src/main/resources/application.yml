@@ -35,3 +35,6 @@ spring:
       redis:
         enabled: false
 
+product:
+  service:
+    url: ${PRODUCT_SERVICE_URL}

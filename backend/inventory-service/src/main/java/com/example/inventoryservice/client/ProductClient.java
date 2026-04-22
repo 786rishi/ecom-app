@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@FeignClient(name = "product-service", url = "http://localhost:8084")
+@FeignClient(name = "product-service", url = "${product.service.url}")
 public interface ProductClient {
 
     @GetMapping("/products/{id}")

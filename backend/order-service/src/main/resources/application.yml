@@ -50,8 +50,8 @@ management:
 
 inventory:
   service:
-    url: ${INVENTORY_SERVICE_URL}
+    url: ${INVENTORY_SERVICE_URI}
 
 product:
   service:
-    url: ${PRODUCT_SERVICE_URL}
+    url: ${PRODUCT_SERVICE_URI}

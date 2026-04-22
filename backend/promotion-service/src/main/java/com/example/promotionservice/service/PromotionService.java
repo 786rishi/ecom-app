@@ -32,19 +32,9 @@ public class PromotionService {
         double totalDiscount = 0;
         List<String> applied = new ArrayList<>();
 
-       // boolean couponApplied = false;
-
+        // ✅ 1. Apply ALL non-coupon promotions
         for (Promotion promo : promotions) {
-
-            if (promo.getCouponCode() != null &&
-                    cart.getCouponCode() != null &&
-                    !promo.getCouponCode().equals(cart.getCouponCode())) {
-                continue;
-            }
-
-//            if (couponApplied) {
-//                continue;
-//            }
+            if (promo.getCouponCode() != null) continue; // skip coupons
 
             PromotionRule rule = getRule(promo.getType());
 
@@ -52,11 +42,28 @@ public class PromotionService {
                 double discount = rule.apply(cart, promo);
                 totalDiscount += discount;
                 applied.add(promo.getName());
-               // couponApplied = true;
             }
-            else {
-                throw new RuntimeException("Coupon can not be applied");
+        }
+
+        // ✅ 2. Apply ONLY requested coupon (if present)
+        if (cart.getCouponCode() != null) {
+
+            Promotion couponPromo = promotions.stream()
+                    .filter(p -> p.getCouponCode() != null)
+                    .filter(p -> p.getCouponCode().equals(cart.getCouponCode()))
+                    .findFirst()
+                    .orElseThrow(() ->
+                            new RuntimeException("Invalid coupon code"));
+
+            PromotionRule rule = getRule(couponPromo.getType());
+
+            if (!rule.isApplicable(cart, couponPromo)) {
+                throw new RuntimeException("Coupon not applicable");
             }
+
+            double discount = rule.apply(cart, couponPromo);
+            totalDiscount += discount;
+            applied.add(couponPromo.getName());
         }
 
         orderClient.updateCart(cart.getUserId(), totalDiscount);
@@ -68,6 +75,49 @@ public class PromotionService {
                 .appliedPromotions(applied)
                 .build();
     }
+//    public PromotionResponse applyPromotions(CartRequest cart) {
+//
+//        List<Promotion> promotions = repository.findByActiveTrue();
+//
+//        double totalDiscount = 0;
+//        List<String> applied = new ArrayList<>();
+//
+//       // boolean couponApplied = false;
+//
+//        for (Promotion promo : promotions) {
+//
+//            if (promo.getCouponCode() != null &&
+//                    cart.getCouponCode() != null &&
+//                    !promo.getCouponCode().equals(cart.getCouponCode())) {
+//                continue;
+//            }
+//
+////            if (couponApplied) {
+////                continue;
+////            }
+//
+//            PromotionRule rule = getRule(promo.getType());
+//
+//            if (rule.isApplicable(cart, promo)) {
+//                double discount = rule.apply(cart, promo);
+//                totalDiscount += discount;
+//                applied.add(promo.getName());
+//               // couponApplied = true;
+//            }
+//            else {
+//                throw new RuntimeException("Coupon can not be applied");
+//            }
+//        }
+//
+//        orderClient.updateCart(cart.getUserId(), totalDiscount);
+//
+//        return PromotionResponse.builder()
+//                .originalAmount(cart.getTotalAmount())
+//                .discount(totalDiscount)
+//                .finalAmount(cart.getTotalAmount() - totalDiscount)
+//                .appliedPromotions(applied)
+//                .build();
+//    }
 
     private PromotionRule getRule(PromotionType type) {
         return switch (type) {

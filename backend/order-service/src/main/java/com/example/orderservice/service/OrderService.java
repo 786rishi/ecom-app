@@ -72,9 +72,9 @@ public class OrderService {
 
         order.setItems(orderItems);
         order.setTotalAmount(total);
-        order.setDiscount(cart.getDiscount());
-        order.setEffectiveAmount(total - cart.getDiscount());
-
+        double discount = cart.getDiscount() != null ? cart.getDiscount() : 0.0;
+        order.setDiscount(discount);
+        order.setEffectiveAmount(total - discount);
         return repository.save(order);
     }
 

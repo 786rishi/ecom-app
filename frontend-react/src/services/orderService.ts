@@ -15,11 +15,24 @@ export interface PromotionItem {
   price: number;
 }
 
+export interface Promotion {
+  id: string;
+  name: string;
+  type: 'FLAT' | 'PERCENTAGE';
+  discountValue: number;
+  minOrderAmount: number;
+  couponCode: string | null;
+  active: boolean;
+  startDate: string | null;
+  endDate: string | null;
+  conditions: any;
+}
+
 export interface PromotionRequest {
   id: number;
   userId: string;
   totalAmount: number;
-  couponCode: string;
+  couponCode?: string;
   items: PromotionItem[];
 }
 
@@ -111,7 +124,34 @@ class OrderService {
     }
   }
 
-  async applyPromotion(userId: string, totalAmount: number, items: CartItem[], couponCode: string): Promise<OrderResponse> {
+  async getPromotions(): Promise<{ success: boolean; message: string; promotions: Promotion[] }> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/promotions/admin/promotions`, {
+        method: 'GET',
+        headers: this.getAuthHeaders()
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return {
+        success: true,
+        message: 'Promotions fetched successfully',
+        promotions: data || []
+      };
+    } catch (error) {
+      console.error('Error fetching promotions:', error);
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : 'Failed to fetch promotions',
+        promotions: []
+      };
+    }
+  }
+
+  async applyPromotion(userId: string, totalAmount: number, items: CartItem[], couponCode?: string): Promise<OrderResponse> {
     try {
       const promotionItems: PromotionItem[] = items.map((item, index) => ({
         id: index + 1,
@@ -120,16 +160,21 @@ class OrderService {
         price: item.product.price
       }));
 
+      const requestBody: PromotionRequest = {
+        id: 2,
+        userId,
+        totalAmount,
+        items: promotionItems
+      };
+
+      if (couponCode) {
+        requestBody.couponCode = couponCode;
+      }
+
       const response = await fetch(`${API_BASE_URL}/promotions/promotions/apply`, {
         method: 'POST',
         headers: this.getAuthHeaders(),
-        body: JSON.stringify({
-          id: 2,
-          userId,
-          totalAmount,
-          couponCode,
-          items: promotionItems
-        } as PromotionRequest)
+        body: JSON.stringify(requestBody)
       });
 
       if (!response.ok) {
@@ -165,7 +210,6 @@ class OrderService {
         } as CheckoutRequest)
       });
 
-      debugger
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }

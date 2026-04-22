@@ -178,23 +178,11 @@ public class ProductService {
             return new PageImpl<>(result, pageable, totalHits);
         }
 
-//        SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
-//        QueryBuilder query = QueryBuilders.multiMatchQuery(
-//                keyword,
-//                "name",
-//                "description",
-//                "category"
-//        ).fuzziness(Fuzziness.AUTO).operator(Operator.OR);
-//        sourceBuilder.query(
-//                        query
-//        ).from(pageable.getPageNumber() * pageable.getPageSize())
-//                .size(pageable.getPageSize());
 
         SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
 
         BoolQueryBuilder query = QueryBuilders.boolQuery()
 
-                // 🔹 Fuzzy match (handles typos like "salwa")
                 .should(QueryBuilders.multiMatchQuery(
                                 keyword,
                                 "name",
@@ -225,23 +213,6 @@ public class ProductService {
 
         Map<String, Object> map = new HashMap<>();
         map.put("now", now);
-
-        // 🔥 FEATURED FIRST LOGIC
-//        sourceBuilder.sort(
-//                SortBuilders.scriptSort(
-//                        new Script(
-//                                ScriptType.INLINE,
-//                                "painless",
-//                                "if (doc['featureStart'].size()!=0 && doc['featureEnd'].size()!=0 && doc['featureStart'].value.toInstant().toEpochMilli() <= params.now && doc['featureEnd'].value.toInstant().toEpochMilli() >= params.now) { return 1 } else { return 0 }",
-//                                map),
-//                        ScriptSortBuilder.ScriptSortType.NUMBER
-//                ).order(SortOrder.DESC)
-//        );
-
-        // Optional: secondary sort (relevance)
-      //  sourceBuilder.sort("_score", SortOrder.DESC);
-
-        //sourceBuilder.sort("featured", SortOrder.DESC);
 
         searchRequest.source(sourceBuilder);
 

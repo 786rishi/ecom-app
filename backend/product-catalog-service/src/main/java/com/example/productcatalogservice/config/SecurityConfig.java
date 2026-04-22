@@ -1,6 +1,7 @@
 package com.example.productcatalogservice.config;
 
 import com.example.productcatalogservice.convertor.KeycloakRoleConverter;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;

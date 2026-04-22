@@ -25,3 +25,6 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MySQLDialect
+
+keycloak:
+  issuer-url: ${KEYCLOAK_ISSUER_URL}

@@ -32,3 +32,6 @@ aws:
 inventory:
   service:
     url: ${INVENTORY_SERVICE_URI}
+
+keycloak:
+  issuer-url: ${KEYCLOAK_ISSUER_URL}

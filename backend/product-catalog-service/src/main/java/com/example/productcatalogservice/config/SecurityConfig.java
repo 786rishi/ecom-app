@@ -39,10 +39,10 @@ public class SecurityConfig {
     @Bean
     public JwtDecoder jwtDecoder() {
         NimbusJwtDecoder decoder =
-                JwtDecoders.fromIssuerLocation(issuerUrl);
+                JwtDecoders.fromIssuerLocation("http://localhost:8080/realms/master");
 
         OAuth2TokenValidator<Jwt> withIssuer =
-                JwtValidators.createDefaultWithIssuer(issuerUrl);
+                JwtValidators.createDefaultWithIssuer("http://localhost:8080/realms/master");
 
         decoder.setJwtValidator(withIssuer);
 

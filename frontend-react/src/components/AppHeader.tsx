@@ -238,14 +238,14 @@ const AppHeader: React.FC<AppHeaderProps> = ({
             </Button>
 
             {/* Clear Filters */}
-            <Button
+            {/* <Button
               variant="outline-secondary"
               size="sm"
               onClick={handleClearAll}
               title="Clear all filters"
             >
               Clear Filters
-            </Button>
+            </Button> */}
           </div>
           </div>
         </Container>

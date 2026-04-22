@@ -9,3 +9,7 @@ spring:
     mongodb:
       uri: ${MONGODB_URI}/promodb?authSource=admin
       auto-index-creation: true
+
+order:
+  service:
+    url: ${ORDER_SERVICE_URL}

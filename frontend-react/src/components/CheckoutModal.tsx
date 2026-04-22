@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Modal, Button, Form, Alert, Row, Col, Badge } from 'react-bootstrap';
 import { useCart } from '../contexts/CartContext';
 import { CartItem } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
-import { orderService } from '../services/orderService';
+import { orderService, Promotion } from '../services/orderService';
 
 interface CheckoutModalProps {
   show: boolean;
@@ -19,9 +19,13 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ show, onHide }) => {
   const [originalAmount, setOriginalAmount] = useState<number | null>(null);
   const [discount, setDiscount] = useState<number | null>(null);
   const [finalAmount, setFinalAmount] = useState<number | null>(null);
+  const [baseCartTotal, setBaseCartTotal] = useState<number | null>(null);
   const [appliedPromotions, setAppliedPromotions] = useState<string[]>([]);
+  const [autoAppliedPromotions, setAutoAppliedPromotions] = useState<Promotion[]>([]);
   const [promotionApplied, setPromotionApplied] = useState(false);
+  const [manualPromotionApplied, setManualPromotionApplied] = useState(false);
   const [promotionError, setPromotionError] = useState('');
+  const [isLoadingPromotions, setIsLoadingPromotions] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
     firstName: '',
@@ -42,6 +46,65 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ show, onHide }) => {
     }));
   };
 
+  // Auto-apply active PERCENTAGE promotions on component mount
+  useEffect(() => {
+    if (show && auth.isAuthenticated && auth.user?.id && cart.items.length > 0) {
+      applyAutoPromotions();
+    }
+  }, [show, auth.isAuthenticated, auth.user?.id, cart.items]);
+
+  const applyAutoPromotions = async () => {
+    if (!auth.isAuthenticated || !auth.user?.id) return;
+
+    setIsLoadingPromotions(true);
+    setPromotionError('');
+
+    try {
+      // Fetch all promotions
+      const promotionsResponse = await orderService.getPromotions();
+      
+      if (!promotionsResponse.success) {
+        console.error('Failed to fetch promotions:', promotionsResponse.message);
+        return;
+      }
+
+      // Filter active PERCENTAGE promotions
+      const activePercentagePromotions = promotionsResponse.promotions.filter(
+        promo => promo.active && promo.type === 'PERCENTAGE' && promo.couponCode == null && cart.total >= promo.minOrderAmount
+      );
+
+      if (activePercentagePromotions.length === 0) {
+        return;
+      }
+
+      // Set the base cart total once
+      setBaseCartTotal(cart.total);
+
+      // Apply each active percentage promotion
+      for (const promotion of activePercentagePromotions) {
+        const result = await orderService.applyPromotion(
+          auth.user.id,
+          cart.total,
+          cart.items
+        );
+
+        if (result.success) {
+          setOriginalAmount(cart.total); // Keep original cart total as subtotal
+          setDiscount(result.discount || 0);
+          setFinalAmount(result.finalAmount || cart.total);
+          setAppliedPromotions(result.appliedPromotions || []);
+          setPromotionApplied(true);
+          setAutoAppliedPromotions(prev => [...prev, promotion]);
+        }
+      }
+    } catch (error) {
+      console.error('Error applying auto promotions:', error);
+      setPromotionError('Failed to apply automatic promotions');
+    } finally {
+      setIsLoadingPromotions(false);
+    }
+  };
+
   const handlePromotionApply = async () => {
     if (!promotionCode.trim()) {
       setPromotionError('Please enter a promotion code');
@@ -57,19 +120,23 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ show, onHide }) => {
     setPromotionError('');
 
     try {
+      const originalCartTotal = baseCartTotal !== null ? baseCartTotal : cart.total;
+      
       const result = await orderService.applyPromotion(
         auth.user.id,
-        cart.total,
+        originalCartTotal,
         cart.items,
         promotionCode
       );
 
       if (result.success) {
-        setOriginalAmount(result.originalAmount || cart.total);
+        setOriginalAmount(originalCartTotal); // Keep original cart total as subtotal
         setDiscount(result.discount || 0);
-        setFinalAmount(result.finalAmount || cart.total);
+        setFinalAmount(result.finalAmount || originalCartTotal);
         setAppliedPromotions(result.appliedPromotions || []);
         setPromotionApplied(true);
+        setManualPromotionApplied(true);
+        setPromotionCode(''); // Clear the input after successful application
         setPromotionError('');
       } else {
         setPromotionError(result.message || 'Failed to apply promotion');
@@ -99,7 +166,6 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ show, onHide }) => {
       // Step 1: Checkout
       const checkoutResult = await orderService.checkout(auth.user.id);
       
-      
       if (!checkoutResult.success) {
         throw new Error(checkoutResult.message || 'Checkout failed');
       }
@@ -126,7 +192,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ show, onHide }) => {
 
       try {
         await Promise.all(inventoryPromises);
-        console.log('All inventory confirmations completed successfully');
+        // console.log('All inventory confirmations completed successfully');
       } catch (error) {
         console.error('Inventory confirmation failed:', error);
         // Continue with order even if inventory confirmation fails
@@ -154,9 +220,13 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ show, onHide }) => {
     setOriginalAmount(null);
     setDiscount(null);
     setFinalAmount(null);
+    setBaseCartTotal(null);
     setAppliedPromotions([]);
+    setAutoAppliedPromotions([]);
     setPromotionApplied(false);
+    setManualPromotionApplied(false);
     setPromotionError('');
+    setIsLoadingPromotions(false);
     setFormData({
       email: '',
       firstName: '',
@@ -227,24 +297,43 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ show, onHide }) => {
                   
                   {/* Promotion Code Section */}
                   <div className="mb-3">
+                    {isLoadingPromotions && (
+                      <Alert variant="info" className="small mb-2">
+                        Applying automatic promotions...
+                      </Alert>
+                    )}
+                    
+                    {autoAppliedPromotions.length > 0 && (
+                      <div className="mb-2">
+                        <small className="text-muted fw-semibold">Auto-applied Promotions:</small>
+                        <div className="d-flex flex-wrap gap-1 mt-1">
+                          {autoAppliedPromotions.map((promo, index) => (
+                            <Badge key={index} bg="success" className="small">
+                              {promo.name} ({promo.discountValue}% off)
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    
                     <Form.Group className="mb-2">
-                      <Form.Label className="small fw-semibold">Promotion Code</Form.Label>
+                      <Form.Label className="small fw-semibold">Additional Promo Code</Form.Label>
                       <div className="d-flex gap-2">
                         <Form.Control
                           type="text"
                           placeholder="Enter promo code"
                           value={promotionCode}
                           onChange={(e) => setPromotionCode(e.target.value)}
-                          disabled={promotionApplied}
+                          disabled={isProcessing}
                           size="sm"
                         />
                         <Button
                           variant="outline-primary"
                           size="sm"
                           onClick={handlePromotionApply}
-                          disabled={promotionApplied || isProcessing || !promotionCode.trim()}
+                          disabled={isProcessing || !promotionCode.trim()}
                         >
-                          {promotionApplied ? 'Applied' : 'Apply'}
+                          {isProcessing ? 'Applying...' : 'Apply'}
                         </Button>
                       </div>
                       {promotionError && (
@@ -252,9 +341,9 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ show, onHide }) => {
                           {promotionError}
                         </Form.Text>
                       )}
-                      {promotionApplied && discount !== null && discount > 0 && (
+                      {manualPromotionApplied && discount !== null && discount > 0 && (
                         <Form.Text className="text-success small">
-                          Promotion applied! You saved ${discount.toFixed(2)}
+                          Additional promotion applied! You saved ${discount.toFixed(2)}
                         </Form.Text>
                       )}
                     </Form.Group>

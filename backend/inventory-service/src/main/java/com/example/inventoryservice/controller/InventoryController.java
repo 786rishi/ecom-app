@@ -1,5 +1,6 @@
 package com.example.inventoryservice.controller;
 
+import com.example.inventoryservice.dto.InventoryResponse;
 import com.example.inventoryservice.model.Inventory;
 import com.example.inventoryservice.service.InventoryService;
 import org.springframework.web.bind.annotation.*;
@@ -17,7 +18,7 @@ public class InventoryController {
     }
 
     @GetMapping()
-    public List<Inventory> getAll() {
+    public List<InventoryResponse> getAll() {
         return service.getAll();
     }
 
@@ -32,6 +33,12 @@ public class InventoryController {
     public Inventory get(@PathVariable("productId") String productId) {
         return service.get(productId);
     }
+
+    @DeleteMapping("/{productId}")
+    public void delete(@PathVariable("productId") String productId) {
+        service.delete(productId);
+    }
+
 
     @PostMapping("/reserve")
     public Inventory reserve(

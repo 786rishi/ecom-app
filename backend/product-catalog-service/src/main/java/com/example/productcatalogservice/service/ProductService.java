@@ -4,16 +4,21 @@ import com.example.productcatalogservice.client.InventoryClient;
 import com.example.productcatalogservice.dto.ProductSearchRequest;
 import com.example.productcatalogservice.exception.ProductNotFoundException;
 import com.example.productcatalogservice.model.Product;
+import com.example.productcatalogservice.model.ProductTestimonial;
 import com.example.productcatalogservice.repository.ProductRepository;
+import org.opensearch.common.unit.Fuzziness;
+import org.opensearch.index.query.*;
+import org.opensearch.index.query.MoreLikeThisQueryBuilder.Item;
+import com.example.productcatalogservice.repository.ProductTestimonialRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.AllArgsConstructor;
 import org.opensearch.action.index.IndexRequest;
 import org.opensearch.action.search.SearchRequest;
 import org.opensearch.action.search.SearchResponse;
 import org.opensearch.client.RequestOptions;
 import org.opensearch.client.RestHighLevelClient;
-import org.opensearch.index.query.BoolQueryBuilder;
+import org.opensearch.index.query.MoreLikeThisQueryBuilder;
 import org.opensearch.index.query.QueryBuilders;
-import org.opensearch.index.query.RangeQueryBuilder;
 import org.opensearch.search.SearchHit;
 import org.opensearch.search.builder.SearchSourceBuilder;
 import org.opensearch.search.sort.SortOrder;
@@ -29,7 +34,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
+@AllArgsConstructor
 @Service
 public class ProductService {
 
@@ -37,15 +44,7 @@ public class ProductService {
     private final RestHighLevelClient restHighLevelClient;
     private final ObjectMapper objectMapper;
     private final InventoryClient inventoryClient;
-
-    public ProductService(ProductRepository repository, RestHighLevelClient restHighLevelClient,
-                          ObjectMapper objectMapper, InventoryClient inventoryClient){
-        this.repository = repository;
-        this.restHighLevelClient = restHighLevelClient;
-        this.objectMapper = objectMapper;
-        this.inventoryClient = inventoryClient;
-    }
-
+    private final ProductTestimonialRepository testimonialRepository;
 
 
     public Product create(Product product) throws IOException {
@@ -101,9 +100,7 @@ public class ProductService {
         jsonMap.put("availableQuantity", product.getAvailableQuantity());
 
         jsonMap.put("attributes", product.getAttributes());
-
-
-
+        jsonMap.put("image", product.getImage());
 
         if (product.getFeatured() != null) {
             jsonMap.put("featured", product.getFeatured());
@@ -129,7 +126,7 @@ public class ProductService {
     }
 
     public Page<Product> getAll(Pageable pageable) {
-        return repository.findAll(pageable);
+        return repository.findByActiveTrue(pageable);
     }
 
     public Product getById(String id) {
@@ -156,6 +153,7 @@ public class ProductService {
             SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
 
             BoolQueryBuilder query = QueryBuilders.boolQuery()
+                    .must(QueryBuilders.termQuery("active", true))
                     .must(QueryBuilders.termQuery("featured", true))
                     .filter(QueryBuilders.rangeQuery("featureStart").lte("now"))
                     .filter(QueryBuilders.rangeQuery("featureEnd").gte("now"));
@@ -180,16 +178,48 @@ public class ProductService {
             return new PageImpl<>(result, pageable, totalHits);
         }
 
+//        SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
+//        QueryBuilder query = QueryBuilders.multiMatchQuery(
+//                keyword,
+//                "name",
+//                "description",
+//                "category"
+//        ).fuzziness(Fuzziness.AUTO).operator(Operator.OR);
+//        sourceBuilder.query(
+//                        query
+//        ).from(pageable.getPageNumber() * pageable.getPageSize())
+//                .size(pageable.getPageSize());
+
         SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
-        sourceBuilder.query(
-                QueryBuilders.multiMatchQuery(
-                        keyword,
-                        "name",
-                        "description",
-                        "category"
-                )
-        ).from(pageable.getPageNumber() * pageable.getPageSize())
-                .size(pageable.getPageSize());
+
+        BoolQueryBuilder query = QueryBuilders.boolQuery()
+
+                // 🔹 Fuzzy match (handles typos like "salwa")
+                .should(QueryBuilders.multiMatchQuery(
+                                keyword,
+                                "name",
+                                "description",
+                                "category"
+                        )
+                        .fuzziness(Fuzziness.AUTO)
+                        .prefixLength(1)          // improves fuzzy quality
+                        .operator(Operator.OR)
+                        .boost(2.0f))             // give it weight
+
+                // 🔹 Prefix match (handles partial like "salw")
+                .should(QueryBuilders.multiMatchQuery(
+                                keyword,
+                                "name",
+                                "description",
+                                "category"
+                        )
+                        .type(MultiMatchQueryBuilder.Type.PHRASE_PREFIX)
+                        .boost(3.0f));            // higher priority
+
+        sourceBuilder.query(query)
+                .from(pageable.getPageNumber() * pageable.getPageSize())
+                .size(pageable.getPageSize())
+                .sort("_score", SortOrder.DESC);
 
         long now = System.currentTimeMillis();
 
@@ -248,6 +278,12 @@ public class ProductService {
     public void delete(String id) {
         Product product = getById(id);
         product.setActive(false); // soft delete
+
+        try {
+            indexProduct(product);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
         repository.save(product);
     }
 
@@ -296,12 +332,11 @@ public class ProductService {
 
         BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
 
-        // 🔍 Search
         if (request.getKeyword() != null) {
             boolQuery.must(QueryBuilders.multiMatchQuery(
                     request.getKeyword(),
                     "name", "description", "category"
-            ));
+            ).fuzziness(Fuzziness.AUTO));
         }
 
         // 🧠 Filters
@@ -365,4 +400,85 @@ public class ProductService {
 
         return new PageImpl<>(result, PageRequest.of(request.getPage(), request.getSize()), totalHits);
     }
+
+    public List<ProductTestimonial> getProductTestimonial(String productId) {
+        return testimonialRepository.findByProductIdAndApprovedTrue(productId);
+    }
+
+    public ProductTestimonial addProductTestimonial(ProductTestimonial productTestimonial) {
+        repository.findById(productTestimonial.getProductId())
+                .orElseThrow(() -> new RuntimeException("Product not found"));
+        return testimonialRepository.save(productTestimonial);
+    }
+
+    public List<String> searchRelatedProductIds(String productId, String category) {
+
+        try {
+            SearchRequest searchRequest = new SearchRequest("products");
+
+            // 🔥 Bool Query
+            BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
+
+            // 🔥 more_like_this (core similarity)
+            MoreLikeThisQueryBuilder mltQuery = QueryBuilders.moreLikeThisQuery(
+                            new String[]{"name", "description"},
+                            null,
+                            new Item[]{new Item("products", productId)}
+                    )
+                    .minTermFreq(1)
+                    .minDocFreq(1);
+
+            boolQuery.must(mltQuery);
+
+            // 🔥 filters
+            boolQuery.filter(QueryBuilders.termQuery("category.keyword", category));
+            boolQuery.filter(QueryBuilders.termQuery("active", true));
+            boolQuery.filter(QueryBuilders.termQuery("inStock", true));
+
+            // 🔥 exclude same product
+            boolQuery.mustNot(QueryBuilders.termQuery("_id", productId));
+
+            // 🔥 Search Source
+            SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
+            sourceBuilder.query(boolQuery);
+            sourceBuilder.size(6); // limit
+
+            searchRequest.source(sourceBuilder);
+
+            // 🔥 Execute
+            SearchResponse response = restHighLevelClient.search(searchRequest, RequestOptions.DEFAULT);
+
+            // 🔥 Extract IDs
+            List<String> ids = new ArrayList<>();
+            for (SearchHit hit : response.getHits().getHits()) {
+                ids.add(hit.getId());
+            }
+
+            return ids;
+
+        } catch (Exception e) {
+            throw new RuntimeException("Error while fetching related products", e);
+        }
+    }
+
+    public List<Product> getRelatedProducts(String productId) {
+
+        Product current = repository.findById(productId)
+                .orElseThrow(() -> new RuntimeException("Product not found"));
+
+        // 🔥 OpenSearch call
+        List<String> relatedIds = searchRelatedProductIds(productId, current.getCategory());
+
+        // 🔥 fallback (VERY IMPORTANT)
+        if (relatedIds.isEmpty()) {
+            return repository
+                    .findByCategoryAndIdNot(current.getCategory(), productId);
+        }
+
+        // 🔥 fetch from DB
+        List<Product> products = repository.findAllById(relatedIds);
+
+        return products;
+    }
+
 }

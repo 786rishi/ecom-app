@@ -1,26 +1,38 @@
-import React, { useState } from 'react';
-import { Container, Row, Col, Button, Badge, Alert } from 'react-bootstrap';
+import React, { useState, useEffect } from 'react';
+import { Container, Row, Col, Button, Badge, Alert, Spinner } from 'react-bootstrap';
 import { Product } from '../types/product';
 import { useCart } from '../contexts/CartContext';
+import { useAuth } from '../contexts/AuthContext';
+import { orderService } from '../services/orderService';
 import ProtectedComponent from './ProtectedComponent';
+import ProductCard from './ProductCard';
+import TestimonialsList from './TestimonialsList';
+import TestimonialForm from './TestimonialForm';
 
 interface ProductDetailsProps {
   product: Product;
   onBack: () => void;
+  onProductClick: (product: Product) => void;
   isAuthenticated: boolean;
 }
 
 const ProductDetails: React.FC<ProductDetailsProps> = ({
   product,
   onBack,
+  onProductClick,
   isAuthenticated
 }) => {
   const { addToCart } = useCart();
+  const { auth } = useAuth();
+  
   const [showToast, setShowToast] = useState(false);
   const [imageZoom, setImageZoom] = useState(1);
   const [imagePosition, setImagePosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [refreshTestimonials, setRefreshTestimonials] = useState(false);
+  const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
+  const [relatedProductsLoading, setRelatedProductsLoading] = useState(false);
 
   const handleAddToCart = () => {
     addToCart(product);
@@ -73,6 +85,27 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({
     setIsDragging(false);
   };
 
+  // Fetch related products when component mounts
+  useEffect(() => {
+    const fetchRelatedProducts = async () => {
+      setRelatedProductsLoading(true);
+      try {
+        const response = await orderService.getRelatedProducts(product.id);
+        if (response.success) {
+          setRelatedProducts(response.products);
+        } else {
+          console.error('Failed to fetch related products:', response.message);
+        }
+      } catch (error) {
+        console.error('Error fetching related products:', error);
+      } finally {
+        setRelatedProductsLoading(false);
+      }
+    };
+
+    fetchRelatedProducts();
+  }, [product.id]);
+
   const currentImage = product.image;
 
   return (
@@ -97,7 +130,7 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({
                   onMouseLeave={handleMouseLeave}
                 >
                   <img
-                    src={currentImage}
+                    src={currentImage || 'https://via.placeholder.com/300x200?text=No+Image'}
                     alt={product.name}
                     className="img-fluid"
                     style={{
@@ -227,7 +260,7 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({
               </div>
 
               {/* Additional Info */}
-              <div className="text-muted small">
+              <div className="text-muted small mb-4">
                 <p className="mb-1">
                   <strong>Product ID:</strong> {product.id}
                 </p>
@@ -240,10 +273,64 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({
                   </p>
                 )}
               </div>
+
+              {/* Related Products Section */}
+              <div className="related-products-section mt-4 pt-3 border-top">
+                <h5 className="mb-3">Related Products</h5>
+                {relatedProductsLoading ? (
+                  <div className="text-center py-3">
+                    <Spinner animation="border" role="status">
+                      <span className="visually-hidden">Loading related products...</span>
+                    </Spinner>
+                  </div>
+                ) : relatedProducts.length > 0 ? (
+                  <div className="related-products-scroll" style={{
+                    display: 'flex',
+                    flexDirection: 'row',
+                    gap: '1rem',
+                    overflowX: 'auto',
+                    paddingBottom: '0.5rem',
+                    scrollbarWidth: 'thin',
+                    scrollbarColor: '#c1c1c1 #f1f1f1'
+                  }}>
+                    {relatedProducts.map((relatedProduct) => (
+                      <div key={relatedProduct.id} style={{ 
+                        minWidth: '250px', 
+                        maxWidth: '250px',
+                        flexShrink: 0
+                      }}>
+                        <ProductCard
+                          product={relatedProduct}
+                          onProductClick={onProductClick}
+                          showAddToCart={true}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-muted text-center py-3">
+                    <small>No related products found</small>
+                  </div>
+                )}
+              </div>
             </div>
           </Col>
         </Row>
       </Container>
+
+      {/* Testimonials Section */}
+      <TestimonialsList productId={product.id} refreshTrigger={refreshTestimonials} />
+
+      {/* Testimonial Form Section */}
+      {auth && auth.user && (
+        <TestimonialForm
+          productId={product.id}
+          userId={auth.user.id}
+          userName={auth.user.name || auth.user.preferredUsername || 'Anonymous'}
+          isAuthenticated={isAuthenticated}
+          onSubmitSuccess={() => setRefreshTestimonials(!refreshTestimonials)}
+        />
+      )}
 
       {/* Toast Notification */}
       {showToast && (

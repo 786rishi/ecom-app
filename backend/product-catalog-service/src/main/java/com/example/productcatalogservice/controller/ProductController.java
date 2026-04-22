@@ -2,6 +2,7 @@ package com.example.productcatalogservice.controller;
 
 import com.example.productcatalogservice.dto.ProductSearchRequest;
 import com.example.productcatalogservice.model.Product;
+import com.example.productcatalogservice.model.ProductTestimonial;
 import com.example.productcatalogservice.service.ProductService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -72,7 +73,7 @@ public class ProductController {
     }
 
     @DeleteMapping("/{id}")
-    public void delete(@PathVariable String id) {
+    public void delete(@PathVariable("id") String id) {
         service.delete(id);
     }
 
@@ -92,4 +93,23 @@ public class ProductController {
 
         service.updateInventory(productId, availableQuantity);
     }
+
+
+    @PostMapping("/testimonials")
+    public ProductTestimonial addProductTestimonial(
+            @RequestBody ProductTestimonial productTestimonial) {
+        return service.addProductTestimonial(productTestimonial);
+    }
+
+    @GetMapping("/testimonials/{productId}")
+    public List<ProductTestimonial> getProductTestimonial(
+            @PathVariable("productId") String productId) {
+        return service.getProductTestimonial(productId);
+    }
+
+    @GetMapping("/{productId}/related")
+    public List<Product> related(@PathVariable("productId") String productId) {
+        return service.getRelatedProducts(productId);
+    }
+
 }

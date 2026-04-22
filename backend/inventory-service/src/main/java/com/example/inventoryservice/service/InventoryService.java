@@ -1,6 +1,9 @@
 package com.example.inventoryservice.service;
 
 import com.example.inventoryservice.client.ProductClient;
+import com.example.inventoryservice.dto.InventoryResponse;
+import com.example.inventoryservice.dto.Product;
+import com.example.inventoryservice.exception.InsufficientStockException;
 import com.example.inventoryservice.model.Inventory;
 import com.example.inventoryservice.repository.InventoryRepository;
 import jakarta.transaction.Transactional;
@@ -8,6 +11,10 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 public class InventoryService {
@@ -66,7 +73,7 @@ public class InventoryService {
                     .orElseThrow(() -> new RuntimeException("Not found"));
 
             if (inventory.getAvailableQuantity() < quantity) {
-                throw new RuntimeException("Insufficient stock");
+                throw new InsufficientStockException("Item sold out, please select items again");
             }
 
             inventory.setReservedQuantity(inventory.getReservedQuantity() + quantity);
@@ -121,8 +128,53 @@ public class InventoryService {
                 .orElseThrow(() -> new RuntimeException("Not found"));
     }
 
-    public List<Inventory> getAll() {
-        return repository.findAll();
+    public void delete(String productId) {
+         repository.deleteByProductId(productId);
+    }
+
+    public List<InventoryResponse> getAll() {
+
+        List<Inventory> inventories = repository.findAll();
+
+        // 1. Extract productIds
+        List<String> productIds = inventories.stream()
+                .map(Inventory::getProductId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .collect(Collectors.toList());
+
+        // 2. Fetch products from product service
+        List<Product> products = productClient.getByIds(productIds);
+
+        // 3. Convert product list -> Map for O(1) lookup
+        Map<String, Product> productMap = products.stream()
+                .collect(Collectors.toMap(
+                        Product::getId,
+                        Function.identity(),
+                        (p1, p2) -> p1
+                ));
+
+        // 4. Build InventoryResponse
+        return inventories.stream()
+                .map(inv -> {
+                    Product product = productMap.get(inv.getProductId());
+
+                    InventoryResponse response = new InventoryResponse();
+                    response.setId(inv.getId());
+                    response.setProductId(inv.getProductId());
+                    response.setAvailableQuantity(inv.getAvailableQuantity());
+                    response.setUpdatedAt(inv.getUpdatedAt());
+
+                    // Set product name (always expected, but still safe)
+                    if (product != null) {
+                        response.setProductName(product.getName());
+                    } else {
+                        response.setProductName(null); // or "Unknown"
+                    }
+
+                    return response;
+                })
+                .collect(Collectors.toList());
     }
 
 }

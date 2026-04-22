@@ -1,6 +1,7 @@
 package com.example.orderservice.service;
 
 import com.example.orderservice.entity.Payment;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -15,6 +16,7 @@ public class PaymentService {
         payment.setOrderId(orderId);
         payment.setAmount(amount);
         payment.setCreatedAt(LocalDateTime.now());
+        payment.setId(Math.abs(UUID.randomUUID().getMostSignificantBits()));
 
         // 🔥 MOCK PAYMENT LOGIC
         boolean success = true; // simulate

@@ -10,7 +10,7 @@ spring:
     url: ${MYSQL_URI}/userdb
     username: ${MYSQL_USERNAME}
     password: ${MYSQL_PASSWORD}
-    driver-class-name: com.mysql.cj.jdbc.Driver
+#    driver-class-name: com.mysql.cj.jdbc.Driver
 
   security:
     oauth2:
@@ -20,3 +20,8 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update
+
+
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect

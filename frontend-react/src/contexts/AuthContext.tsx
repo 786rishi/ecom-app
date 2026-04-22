@@ -44,7 +44,6 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
   switch (action.type) {
 
     case 'INIT_KEYCLOAK_START':
-      console.log("INIT_KEYCLOAK_START");
       return {
         ...state,
         loading: true,
@@ -52,7 +51,6 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
       };
 
     case 'INIT_KEYCLOAK_SUCCESS':
-      console.log("INIT_KEYCLOAK_SUCCESS");
       return {
         ...state,
         keycloak: action.payload,
@@ -61,7 +59,6 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
       };
 
     case 'INIT_KEYCLOAK_FAILURE':
-      console.log("INIT_KEYCLOAK_FAILURE", action);
       return {
         ...state,
         keycloak: null,
@@ -70,7 +67,6 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
       };
 
     case 'LOGIN_START':
-      console.log("LOGIN_START");
       return {
         ...state,
         loading: true,
@@ -78,8 +74,6 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
       };
 
     case 'LOGIN_SUCCESS':
-      console.log("LOGIN_SUCCESS", action);
-
       return {
         ...state,
         user: (action as any).payload.user,
@@ -90,7 +84,6 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
       };
 
     case 'LOGIN_FAILURE':
-      console.log("LOGIN_FAILURE", action);
         return {
         ...state,
         user: null,
@@ -100,7 +93,6 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
       };
 
     case 'LOGOUT':
-      console.log("LOGOUT");
       return {
         ...state,
         user: null,
@@ -110,7 +102,6 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
       };
 
     case 'CLEAR_ERROR':
-      console.log("CLEAR_ERROR");
       return {
         ...state,
         error: null
@@ -158,7 +149,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         dispatch({ type: 'INIT_KEYCLOAK_START' });
 
         const authenticated = await keycloak.init({
-          onLoad: "check-sso",
+          onLoad: "check-sso", //"login-required",  
           pkceMethod: "S256",
           checkLoginIframe: false,
           enableLogging: process.env.NODE_ENV === "development",
@@ -186,6 +177,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
             // Use the token parsed data to create user profile
             const tokenParsed = keycloak.tokenParsed as any;
+
+            const realmRoles = tokenParsed?.realm_access?.roles || [];
+            const clientRoles = tokenParsed?.resource_access?.["fb-login"]?.roles || [];
+
             const user: User = {
               id: tokenParsed?.sub || keycloak.subject || '',
               email: tokenParsed?.email || '',
@@ -193,7 +188,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
               preferredUsername: tokenParsed?.preferred_username,
               givenName: tokenParsed?.given_name,
               familyName: tokenParsed?.family_name,
-              roles: tokenParsed?.realm_access?.roles || []
+              roles: [...realmRoles, ...clientRoles]  //tokenParsed?.realm_access?.roles || []
             };
 
             console.log("User loaded from token", user);

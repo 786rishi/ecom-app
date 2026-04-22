@@ -20,6 +20,19 @@ public class CartController {
         return cartService.addItem(userId, item);
     }
 
+    @PutMapping("/cart/update/quantity")
+    public Cart updateCart(@RequestParam("userId") String userId,
+                          @RequestParam("productId") String productId,@RequestParam("quantity") int quantity) {
+        return cartService.updateCartItem(userId, productId, quantity);
+    }
+
+    @PutMapping("/cart/update/discount")
+    public Cart updateCart(@RequestParam("userId") String userId,
+                           @RequestParam("discount") Double discount) {
+        return cartService.updateCartDiscount(userId, discount);
+    }
+
+
     @GetMapping("/cart/{userId}")
     public Cart getCart(@PathVariable("userId") String userId) {
         return cartService.getCart(userId);

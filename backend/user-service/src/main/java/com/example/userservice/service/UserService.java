@@ -27,7 +27,7 @@ public class UserService {
                     user.setEmail(jwt.getClaim("email"));
                     user.setFirstName(jwt.getClaim("preferred_username"));
                     user.setCreatedAt(LocalDateTime.now());
-                    user.setSubscribedForNewletter(jwt.getClaim("isSubscribedForNewletter"));
+                    user.setSubscribedForNewletter(jwt.getClaim("isSubscribedForNewletter") != null ? jwt.getClaim("isSubscribedForNewletter") : false );
 
                     return repository.save(user);
                 });

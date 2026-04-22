@@ -36,7 +36,7 @@ public class KeycloakRoleConverter implements Converter<Jwt, AbstractAuthenticat
         Map<String, Object> resourceAccess = jwt.getClaim("resource_access");
 
         if (resourceAccess != null) {
-            Map<String, Object> client = (Map<String, Object>) resourceAccess.get("ecommerce-app");
+            Map<String, Object> client = (Map<String, Object>) resourceAccess.get("fb-login");
 
             if (client != null && client.get("roles") != null) {
                 List<String> roles = (List<String>) client.get("roles");

@@ -38,23 +38,23 @@ const ProfessionalNavBar: React.FC<ProfessionalNavBarProps> = ({
   };
 
   const navItems: NavItem[] = [
-    {
-      name: 'Home',
-      href: '#home',
-      action: () => setAppState?.('main'),
-      icon: '🏠'
-    },
+    // {
+    //   name: 'Home',
+    //   href: '#home',
+    //   action: () => setAppState?.('main'),
+    //   icon: '🏠'
+    // },
     {
       name: 'Products',
       href: '#products',
       action: () => setAppState?.('browse'),
       icon: '📦'
     },
-    {
-      name: 'About',
-      href: '#about',
-      icon: 'ℹ️'
-    },
+    // {
+    //   name: 'About',
+    //   href: '#about',
+    //   icon: 'ℹ️'
+    // },
     {
       name: 'Orders',
       href: '#OrderHistory',
@@ -79,6 +79,14 @@ const ProfessionalNavBar: React.FC<ProfessionalNavBarProps> = ({
       icon: '📞',
       action: () => {
         window.location.hash = 'contact';
+      }
+    },
+    {
+      name: 'News & Events',
+      href: '#NewsAndEvents',
+      icon: '📰',
+      action: () => {
+        window.location.hash = 'NewsAndEvents';
       }
     }
   ];

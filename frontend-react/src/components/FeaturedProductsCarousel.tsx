@@ -6,6 +6,7 @@ import LoadingSpinner from './LoadingSpinner';
 import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
 import ProtectedComponent from './ProtectedComponent';
+import AdminProtectedComponent from './AdminProtectedComponent';
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
 
@@ -13,6 +14,7 @@ interface FeaturedProductsCarouselProps {
   onProductClick?: (product: Product) => void;
   showAddToCart?: boolean;
   showWishlist?: boolean;
+  onProductDelete?: (productId: string) => void;
   className?: string;
 }
 
@@ -20,6 +22,7 @@ const FeaturedProductsCarousel: React.FC<FeaturedProductsCarouselProps> = ({
   onProductClick,
   showAddToCart = false,
   showWishlist = false,
+  onProductDelete,
   className = ''
 }) => {
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
@@ -29,8 +32,12 @@ const FeaturedProductsCarousel: React.FC<FeaturedProductsCarouselProps> = ({
   const { auth } = useAuth();
   const [showToast, setShowToast] = useState(false);
   const [showWishlistToast, setShowWishlistToast] = useState(false);
+  const [showDeleteToast, setShowDeleteToast] = useState(false);
   const [toastProduct, setToastProduct] = useState<Product | null>(null);
   const [wishlistLoading, setWishlistLoading] = useState<string | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState<string | null>(null);
+
+  const enableProductDelete = process.env.REACT_APP_ENABLE_PRODUCT_DELETE === 'true';
 
   useEffect(() => {
     const fetchFeaturedProducts = async () => {
@@ -92,6 +99,33 @@ const FeaturedProductsCarousel: React.FC<FeaturedProductsCarouselProps> = ({
       console.error('Failed to add to wishlist:', error);
     } finally {
       setWishlistLoading(null);
+    }
+  };
+
+  const handleDeleteProduct = async (e: React.MouseEvent, product: Product) => {
+    e.stopPropagation();
+    if (!product.id) return;
+
+    try {
+      setDeleteLoading(product.id);
+      await productService.deleteProduct(product.id);
+      
+      // Show success toast notification
+      setShowDeleteToast(true);
+      
+      // Remove the deleted product from featured products
+      setFeaturedProducts(prev => prev.filter(p => p.id !== product.id));
+      
+      // Notify parent component to remove the product from UI
+      if (onProductDelete) {
+        onProductDelete(product.id);
+      }
+    } catch (error) {
+      console.error('Failed to delete product:', error);
+      // Show error toast notification
+      setShowDeleteToast(true);
+    } finally {
+      setDeleteLoading(null);
     }
   };
 
@@ -159,6 +193,36 @@ const FeaturedProductsCarousel: React.FC<FeaturedProductsCarouselProps> = ({
                           style={{ height: '180px', objectFit: 'cover' }}
                         />
                         
+                        {/* Delete Icon - Only visible to admin users when ENABLE_PRODUCT_DELETE is true */}
+                        {enableProductDelete && (
+                          <AdminProtectedComponent>
+                            <Button
+                              variant="danger"
+                              className="position-absolute top-0 start-0 m-2 p-2"
+                              style={{ 
+                                width: 'auto', 
+                                height: 'auto',
+                                zIndex: 10,
+                                backgroundColor: 'transparent',
+                                border: 'none',
+                                color: 'black',
+                                padding: '4px 8px'
+                              }}
+                              onClick={(e) => handleDeleteProduct(e, product)}
+                              disabled={deleteLoading === product.id}
+                              title="Delete Product"
+                            >
+                              {deleteLoading === product.id ? (
+                                <div className="spinner-border spinner-border-sm" role="status" style={{ color: 'black' }}>
+                                  <span className="visually-hidden">Loading...</span>
+                                </div>
+                              ) : (
+                                <span style={{ fontSize: '18px', color: 'black' }}>×</span>
+                              )}
+                            </Button>
+                          </AdminProtectedComponent>
+                        )}
+
                         {/* Wishlist Icon */}
                         {showWishlist && (
                           <ProtectedComponent>
@@ -325,6 +389,30 @@ const FeaturedProductsCarousel: React.FC<FeaturedProductsCarouselProps> = ({
           </Toast.Header>
           <Toast.Body>
             {toastProduct.name} has been added to your wishlist.
+          </Toast.Body>
+        </Toast>
+      )}
+
+      {/* Delete Toast Notification */}
+      {showDeleteToast && (
+        <Toast
+          onClose={() => setShowDeleteToast(false)}
+          show={showDeleteToast}
+          delay={3000}
+          autohide
+          style={{
+            position: 'fixed',
+            top: '140px',
+            right: '20px',
+            zIndex: 9999
+          }}
+        >
+          <Toast.Header>
+            <strong className="me-auto">Product Deleted!</strong>
+            <small>just now</small>
+          </Toast.Header>
+          <Toast.Body>
+            Product has been deleted successfully.
           </Toast.Body>
         </Toast>
       )}

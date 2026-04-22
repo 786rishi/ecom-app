@@ -14,8 +14,8 @@ const CartDropdown: React.FC<CartDropdownProps> = ({ onCheckout }) => {
     removeFromCart(productId);
   };
 
-  const handleQuantityChange = (productId: string, newQuantity: number) => {
-    updateQuantity(productId, newQuantity);
+  const handleQuantityChange = async (productId: string, newQuantity: number) => {
+    await updateQuantity(productId, newQuantity);
   };
 
   const handleClearCart = async () => {

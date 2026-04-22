@@ -48,3 +48,10 @@ management:
           starttls:
             enable: true
 
+inventory:
+  service:
+    url: ${INVENTORY_SERVICE_URL}
+
+product:
+  service:
+    url: ${PRODUCT_SERVICE_URL}

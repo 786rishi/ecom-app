@@ -154,8 +154,38 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     dispatch({ type: 'REMOVE_FROM_CART', payload: productId });
   };
 
-  const updateQuantity = (productId: string, quantity: number) => {
+  const updateQuantity = async (productId: string, quantity: number) => {
+    // Find the current item to store previous quantity for rollback
+    const currentItem = cart.items.find(item => item.product.id === productId);
+    if (!currentItem) return;
+    
+    const previousQuantity = currentItem.quantity;
+    
+    // Update local state immediately for responsive UI
     dispatch({ type: 'UPDATE_QUANTITY', payload: { productId, quantity } });
+    
+    // Make API call if user is authenticated
+    if (auth.isAuthenticated && auth.user?.id) {
+      try {
+        const result = await orderService.updateQuantity(
+          auth.user.id,
+          productId,
+          quantity
+        );
+        
+        if (!result.success) {
+          console.error('Failed to update quantity on backend:', result.message);
+          // Rollback to previous quantity on API failure
+          dispatch({ type: 'UPDATE_QUANTITY', payload: { productId, quantity: previousQuantity } });
+          alert('Failed to update quantity: ' + result.message);
+        }
+      } catch (error) {
+        console.error('Error updating quantity:', error);
+        // Rollback to previous quantity on API error
+        dispatch({ type: 'UPDATE_QUANTITY', payload: { productId, quantity: previousQuantity } });
+        alert('Error updating quantity');
+      }
+    }
   };
 
   const clearCart = async () => {
@@ -166,7 +196,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         
         if (result.success) {
           // Show success message
-          alert('Cart is cleared');
+          //alert('Cart is cleared');
         } else {
           console.error('Failed to clear cart on backend:', result.message);
           alert('Failed to clear cart: ' + result.message);
@@ -191,7 +221,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     try {
       const result = await orderService.getCart(auth.user.id);
       
-      if (result.success && result.items.length > 0) {
+      if (result?.success && result?.items?.length > 0) {
         // Convert API response to CartItem format
         const cartItems = result.items.map((item: any) => ({
           product: {

@@ -27,11 +27,22 @@
   color: #bdc3c7;
   line-height: 1.6;
   margin-bottom: 1.5rem;
+  margin-left: 0px !important;
 }
 
 .footer-social {
   display: flex;
   gap: 1rem;
+}
+
+.social-icon-link {
+  text-decoration: none;
+  display: inline-block;
+  transition: transform 0.3s ease;
+}
+
+.social-icon-link:hover {
+  transform: translateY(-3px);
 }
 
 .social-icon {
@@ -45,11 +56,29 @@
   font-size: 1.2rem;
   transition: all 0.3s ease;
   cursor: pointer;
+  color: #ffffff;
+  padding: 8px;
 }
 
-.social-icon:hover {
+.social-icon-link:hover .social-icon {
   background: #007bff;
-  transform: translateY(-3px);
+}
+
+/* Specific colors for each social media platform */
+.social-icon-link[href*="facebook"]:hover .social-icon {
+  background: #1877f2;
+}
+
+.social-icon-link[href*="instagram"]:hover .social-icon {
+  background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+}
+
+.social-icon-link[href*="twitter"]:hover .social-icon {
+  background: #1da1f2;
+}
+
+.social-icon-link[href*="linkedin"]:hover .social-icon {
+  background: #0077b5;
 }
 
 .footer-links {

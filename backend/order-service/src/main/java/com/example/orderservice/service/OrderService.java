@@ -1,6 +1,10 @@
 package com.example.orderservice.service;
 
 import com.example.orderservice.client.InventoryClient;
+import com.example.orderservice.client.ProductClient;
+import com.example.orderservice.dto.OrderItemResponse;
+import com.example.orderservice.dto.OrderResponse;
+import com.example.orderservice.dto.Product;
 import com.example.orderservice.entity.*;
 import com.example.orderservice.entity.cart.Cart;
 import com.example.orderservice.entity.cart.CartItem;
@@ -8,14 +12,18 @@ import com.example.orderservice.entity.order.Order;
 import com.example.orderservice.entity.order.OrderItem;
 import com.example.orderservice.repository.order.OrderRepository;
 import jakarta.mail.MessagingException;
+import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
+@AllArgsConstructor
 public class OrderService {
 
     private final CartService cartService;
@@ -23,16 +31,8 @@ public class OrderService {
     private final InventoryClient inventoryClient;
     private final OrderRepository repository;
     private final EmailService emailService;
+    private final ProductClient productClient;
 
-
-    public OrderService(CartService cartService, PaymentService paymentService, InventoryClient inventoryClient,
-                        OrderRepository orderRepository, EmailService emailService) {
-        this.cartService = cartService;
-        this.paymentService = paymentService;
-        this.inventoryClient = inventoryClient;
-        this.repository = orderRepository;
-        this.emailService = emailService;
-    }
 
     @Transactional("orderTransactionManager")
     public Order checkout(String userId) {
@@ -72,7 +72,9 @@ public class OrderService {
 
         order.setItems(orderItems);
         order.setTotalAmount(total);
-
+        double discount = cart.getDiscount() != null ? cart.getDiscount() : 0.0;
+        order.setDiscount(discount);
+        order.setEffectiveAmount(total - discount);
         return repository.save(order);
     }
 
@@ -106,7 +108,7 @@ public class OrderService {
         order.setStatus("CONFIRMED");
 
         cartService.clearCart(order.getUserId());
-        emailService.sendOrderConfirmationEmail("786rishisaini@gmail.com", order);
+       // emailService.sendOrderConfirmationEmail("786rishisaini@gmail.com", order);
 
         return repository.save(order);
     }
@@ -149,8 +151,55 @@ public class OrderService {
     }
 
     @Transactional("orderTransactionManager")
-    public List<Order> findOrderByUserId(String userId) {
-        return repository.findByUserIdOrderByCreatedAtDesc(userId);
+    public List<OrderResponse> findOrderByUserId(String userId) {
+        return convertToDTOList(repository.findByUserIdOrderByCreatedAtDesc(userId));
     }
 
+    public List<OrderResponse> convertToDTOList(List<Order> orders) {
+
+        // 🔥 Step 1: Collect ALL productIds from ALL orders
+        List<String> productIds = orders.stream()
+                .flatMap(order -> order.getItems().stream())
+                .map(OrderItem::getProductId)
+                .distinct() // avoid duplicates
+                .collect(Collectors.toList());
+
+        // 🔥 Step 2: Single API call
+        List<Product> products = productClient.getByIds(productIds);
+
+        // 🔥 Step 3: Convert to Map for fast lookup
+        Map<String, Product> productMap = products.stream()
+                .collect(Collectors.toMap(Product::getId, p -> p));
+
+        // 🔥 Step 4: Map Orders → DTO
+        return orders.stream().map(order -> {
+
+            OrderResponse response = new OrderResponse();
+            response.setId(order.getId());
+            response.setUserId(order.getUserId());
+            response.setTotalAmount(order.getEffectiveAmount());
+            response.setDiscount(order.getDiscount());
+            response.setStatus(order.getStatus());
+            response.setCreatedAt(order.getCreatedAt());
+
+            List<OrderItemResponse> itemResponses = order.getItems().stream().map(item -> {
+
+                OrderItemResponse itemDTO = new OrderItemResponse();
+                itemDTO.setId(item.getId());
+                itemDTO.setQuantity(item.getQuantity());
+                itemDTO.setPrice(item.getPrice());
+
+                // 🔥 Attach full product
+                itemDTO.setProduct(productMap.get(item.getProductId()));
+
+                return itemDTO;
+
+            }).collect(Collectors.toList());
+
+            response.setItems(itemResponses);
+
+            return response;
+
+        }).collect(Collectors.toList());
+    }
 }

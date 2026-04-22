@@ -20,6 +20,7 @@ import ProductDetails from './components/ProductDetails';
 import PrivacyPolicy from './components/PrivacyPolicy';
 import OrderHistory from './components/OrderHistory';
 import Wishlist from './components/Wishlist';
+import NewsAndEvents from './components/NewsAndEvents';
 import AdvanceFilter from './components/AdvanceFilter';
 import Footer from './components/Footer';
 import { useProducts, setStateChangeCallback } from './hooks/useProducts';
@@ -31,7 +32,7 @@ import { productService, AdvancedSearchFilters } from './services/productService
 import './App.css';
 import keycloak from './services/keycloak';
 
-type AppState = 'main' | 'browse' | 'add-product' | 'inventory-management' | 'contact' | 'promotions' | 'product-details' | 'privacy-policy' | 'order-history' | 'wishlist';
+type AppState = 'main' | 'browse' | 'add-product' | 'inventory-management' | 'contact' | 'promotions' | 'product-details' | 'privacy-policy' | 'order-history' | 'wishlist' | 'news-events';
 
 // Track previous render to compare
 let lastRenderProducts: any = undefined;
@@ -57,15 +58,14 @@ function AppContent() {
   const [advancedFilterPagination, setAdvancedFilterPagination] = useState<any>(null);
 
   // Register callback to be called when hook state changes
-  React.useEffect(() => {
-    setStateChangeCallback(() => {
-      setForceRender(prev => prev + 1);
-    });
-  }, []);
+  // React.useEffect(() => {
+  //   setStateChangeCallback(() => {
+  //     setForceRender(prev => prev + 1);
+  //   });
+  // }, []);
 
   const hookReturn = useProducts();
-  const { products, allProducts, loading, error, searchQuery, pagination, updatePage, updatePageSize, clearFilters, stateVersion } = hookReturn;
-
+  const { products, allProducts, loading, error, searchQuery, pagination, updatePage, updatePageSize, clearFilters, stateVersion, refetch } = hookReturn;
 
   // Check if products array reference changed
   const productsChanged = lastRenderProducts !== products;
@@ -119,6 +119,17 @@ function AppContent() {
   const handleProductClick = (product: Product) => {
     setSelectedProduct(product);
     setAppState('product-details');
+  };
+
+  const handleProductDelete = async (productId: string) => {
+    // Make a fresh API call to reload products after deletion
+    try {
+      await refetch();
+      // Force re-render to ensure UI updates with fresh data
+      setForceRender(prev => prev + 1);
+    } catch (error) {
+      console.error('Error refreshing products after deletion:', error);
+    }
   };
 
   const handleSearchClear = () => {
@@ -207,36 +218,60 @@ function AppContent() {
     }
   };
 
-  const handleFiltersClear = async () => {
-    try {
-      // Step 1: Clear the loaded products list immediately
-      setFilteredProducts(null);
-      setIsAdvancedFilterActive(false);
-      setAdvancedFilterPagination(null);
+  // const handleFiltersClear = async () => {
+  //   try {
+  //     // Step 1: Clear the loaded products list immediately
+  //     setFilteredProducts(null);
+  //     setIsAdvancedFilterActive(false);
+  //     setAdvancedFilterPagination(null);
 
-      // Step 2: Set loading to true to show loader
-      setClearFiltersLoading(true);
+  //     // Step 2: Set loading to true to show loader
+  //     setClearFiltersLoading(true);
 
-      // Step 3: Clear filter states
-      setCurrentFilters({});
+  //     // Step 3: Clear filter states
+  //     setCurrentFilters({});
 
-      // Step 4: Use hook's clearFilters function to fetch fresh data
-      const { clearFilters } = hookReturn;
-      clearFilters();
+  //     // Step 4: Use hook's clearFilters function to fetch fresh data
+  //     const { clearFilters } = hookReturn;
+  //     clearFilters();
 
-      // Step 5: Wait for the hook to complete the API call
-      await new Promise(resolve => setTimeout(resolve, 500));
+  //     // Step 5: Wait for the hook to complete the API call
+  //     await new Promise(resolve => setTimeout(resolve, 500));
 
-      // Step 6: Force component re-render to ensure UI updates with fresh data
-      setForceRender(prev => prev + 1);
+  //     // Step 6: Force component re-render to ensure UI updates with fresh data
+  //     setForceRender(prev => prev + 1);
 
-    } catch (error) {
-      console.error('Error clearing filters:', error);
-    } finally {
-      // Step 7: Hide loader
-      setClearFiltersLoading(false);
-    }
-  };
+  //   } catch (error) {
+  //     console.error('Error clearing filters:', error);
+  //   } finally {
+  //     // Step 7: Hide loader
+  //     setClearFiltersLoading(false);
+  //   }
+  // };
+
+const handleFiltersClear = async () => {
+  try {
+    setClearFiltersLoading(true);
+
+    // 1. Reset UI states
+    setFilteredProducts(null);
+    setIsAdvancedFilterActive(false);
+    setAdvancedFilterPagination(null);
+    setCurrentFilters({});
+
+    // 2. Clear search/filter in hook
+    clearFilters();
+
+    // 3. Fetch fresh data
+    await refetch();
+
+  } catch (error) {
+    console.error('Error clearing filters:', error);
+  } finally {
+    setClearFiltersLoading(false);
+  }
+};
+
 
   const handleAdvancedFilterClick = () => {
     setShowAdvancedFilter(true);
@@ -246,19 +281,35 @@ function AppContent() {
     setShowAdvancedFilter(false);
   };
 
-  const handleSearch = (query: string) => {
-    // Clear advanced filter state if doing a new search
-    if (query.trim() !== '') {
-      setFilteredProducts(null);
-      setIsAdvancedFilterActive(false);
-      setAdvancedFilterPagination(null);
-      setCurrentFilters({});
-    }
+  // const { updateSearchQuery } = hookReturn;
 
-    // Use hook's updateSearchQuery function directly - let the hook handle loading
-    const { updateSearchQuery } = hookReturn;
-    updateSearchQuery(query);
-  };
+  // const handleSearch = (query: string) => {
+  //   // Clear advanced filter state if doing a new search
+  //   if (query.trim() !== '') {
+  //     setFilteredProducts(null);
+  //     setIsAdvancedFilterActive(false);
+  //     setAdvancedFilterPagination(null);
+  //     setCurrentFilters({});
+  //   }
+
+  //   // Use hook's updateSearchQuery function directly - let the hook handle loading
+  //   updateSearchQuery(query);
+  // };
+
+const { updateSearchQuery } = hookReturn;
+
+const handleSearch = (query: string) => {
+  if (query === searchQuery) return;
+
+  if (query.trim() !== '') {
+    setFilteredProducts(null);
+    setIsAdvancedFilterActive(false);
+    setAdvancedFilterPagination(null);
+    setCurrentFilters({});
+  }
+
+  updateSearchQuery(query);
+};
 
   // Listen for login success event
   React.useEffect(() => {
@@ -277,6 +328,8 @@ function AppContent() {
     const handleHashChange = () => {
       const hash = window.location.hash.substring(1); // Remove the #
 
+      console.log("hash :::", hash);
+
       if (hash === 'product' && auth.isAuthenticated && auth.user?.roles?.includes('admin')) {
         setAppState('add-product');
       } else if (hash === 'Inventory' && auth.isAuthenticated && auth.user?.roles?.includes('admin')) {
@@ -289,6 +342,8 @@ function AppContent() {
         setAppState('wishlist');
       } else if (hash === 'contact') {
         setAppState('contact');
+      } else if (hash === 'NewsAndEvents') {
+        setAppState('news-events');
       } else if (hash === 'OrderHistory' && !auth.isAuthenticated) {
         // Redirect non-authenticated users to main
         setAppState('main');
@@ -297,8 +352,8 @@ function AppContent() {
         // Redirect non-authenticated users to main
         setAppState('main');
         window.location.hash = '';
-      } else if (hash === 'product' || hash === 'Inventory' || hash === 'promotions') {
-        // Redirect non-admin users to browse
+      } else if ((hash === 'product' || hash === 'Inventory' || hash === 'promotions') && auth.isAuthenticated && !auth.user?.roles?.includes('admin')) {
+        // Redirect non-admin authenticated users to browse
         setAppState('browse');
         window.location.hash = '';
       }
@@ -318,6 +373,7 @@ function AppContent() {
   }, []);
 
   // Show landing page
+  {console.log("appState :::", appState)}
   if (appState === 'main') {
     return (
       <LandingPage
@@ -431,6 +487,7 @@ function AppContent() {
         <ProductDetails
           product={selectedProduct}
           onBack={handleBackToProducts}
+          onProductClick={handleProductClick}
           isAuthenticated={auth.isAuthenticated}
         />
       </div>
@@ -503,7 +560,22 @@ function AppContent() {
           onNavigateHome={handleNavigateHome}
           setAppState={setAppState}
         />
-        <Wishlist />
+        <Wishlist setAppState={setAppState} />
+        <Footer onNavigateHome={handleNavigateHome} setAppState={setAppState} />
+      </div>
+    );
+  }
+
+  // Show news & events page
+  if (appState === 'news-events') {
+    return (
+      <div className="App">
+        <ProfessionalNavBar
+          isGuestMode={isGuestMode}
+          onNavigateHome={handleNavigateHome}
+          setAppState={setAppState}
+        />
+        <NewsAndEvents />
         <Footer onNavigateHome={handleNavigateHome} setAppState={setAppState} />
       </div>
     );
@@ -534,18 +606,18 @@ function AppContent() {
           onAdvancedFilterClick={handleAdvancedFilterClick}
           onClearAdvancedFilters={handleFiltersClear}
           onSearch={handleSearch}
-          hasActiveFilters={isAdvancedFilterActive}
+          // hasActiveFilters={isAdvancedFilterActive}
         />
 
-        {/* Featured Products Carousel */}
+        {/* Featured Products Carousel - Only show when no search is active */}
         <FeaturedProductsCarousel
           onProductClick={handleProductClick}
+          onProductDelete={handleProductDelete}
           showAddToCart={auth.isAuthenticated}
           showWishlist={auth.isAuthenticated}
         />
 
         <Container fluid className="py-4">
-
 
           {/* Error Display */}
           {error && (
@@ -554,17 +626,6 @@ function AppContent() {
               <p>{error}</p>
             </Alert>
           )}
-
-          {/* Search Results Header */}
-          {/* <SearchResults
-            products={products}
-            allProducts={allProducts}
-            query={searchQuery}
-            loading={loading}
-            onClearSearch={handleSearchClear}
-            onSuggestionClick={handleSuggestionClick}
-            className="mb-4"
-          /> */}
 
           {/* Loading Spinner - show when loading or clearing filters */}
           {isLoading && (
@@ -582,14 +643,13 @@ function AppContent() {
                 <ProductGrid
                   products={displayProducts || []}
                   onProductClick={handleProductClick}
+                  onProductDelete={handleProductDelete}
                   showAddToCart={auth.isAuthenticated}
                   showWishlist={auth.isAuthenticated}
                   loading={isLoading}
                   className="mb-4"
                   columns={{
-
                     md: 3
-
                   }}
                 />
               ) : (

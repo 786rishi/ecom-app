@@ -7,16 +7,16 @@ spring:
 
   data:
     mongodb:
-      uri: mongodb://admin:admin@107.21.164.204:27017/productdb?authSource=admin
+      uri: ${MONGODB_URI}/productdb?authSource=admin
       auto-index-creation: true
     opensearch:
       index: products
 
   elasticsearch:
-    uris: 107.21.164.204
+    uris: ${ELASTIC_SEARCH_URI}
 
   kafka:
-    bootstrap-servers: 107.21.164.204:29092
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVER}
     consumer:
       group-id: inventory-group
       auto-offset-reset: earliest
@@ -31,7 +31,7 @@ aws:
 
 inventory:
   service:
-    url: http://localhost:8085
+    url: ${INVENTORY_SERVICE_URI}
 
 keycloak:
-  issuer-url: https://107.21.164.204:8443/realms/master
+  issuer-url: ${KEYCLOAK_ISSUER_URL}

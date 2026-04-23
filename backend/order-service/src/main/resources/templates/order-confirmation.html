@@ -1,41 +1,90 @@
+<!DOCTYPE html>
+
 <html>
-<body style="font-family: Arial, sans-serif; line-height: 1.6;">
+<body style="margin:0; padding:0; background-color:#f4f6f8; font-family: Arial, sans-serif;">
 
-<p>Dear Customer,</p>
+<table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f6f8; padding:20px;">
+    <tr>
+        <td align="center">
 
-<p>
-    Thank you for shopping with <b>Mcart Store</b>.
-    We are pleased to inform you that your order has been successfully placed.
-</p>
+            ```
+            <!-- Main Card -->
+            <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff; border-radius:10px; overflow:hidden; box-shadow:0 4px 10px rgba(0,0,0,0.08);">
 
-<h3>Order Details:</h3>
-<p><b>Order ID:</b> [[${orderId}]]</p>
-<p><b>Total Amount:</b> ₹[[${amount}]]</p>
+                <!-- Header -->
+                <tr>
+                    <td style="background:linear-gradient(135deg,#ff6a00,#ee0979); color:#ffffff; text-align:center; padding:20px;">
+                        <h2 style="margin:0;">🛍 Mcart Store</h2>
+                        <p style="margin:5px 0 0;">Order Confirmation</p>
+                    </td>
+                </tr>
 
-<h3>Items:</h3>
-<ul>
-    <li th:each="item : ${items}">
-        [[${item.product.name}]] x [[${item.quantity}]]
-    </li>
-</ul>
+                <!-- Body -->
+                <tr>
+                    <td style="padding:25px; color:#333;">
 
-<p>
-    Your order is currently being processed. We will notify you once it has been shipped.
-</p>
+                        <p style="font-size:16px;">Dear Customer,</p>
 
-<p>
-    If you have any questions or need assistance, please feel free to contact us.
-</p>
+                        <p>
+                            Thank you for shopping with <b style="color:#ee0979;">Mcart Store</b>.
+                            Your order has been <b style="color:green;">successfully placed</b> 🎉
+                        </p>
 
-<br/>
+                        <!-- Order Box -->
+                        <table width="100%" cellpadding="10" cellspacing="0" style="background:#f9fafc; border-radius:8px; margin:20px 0;">
+                            <tr>
+                                <td><b>Order ID:</b></td>
+                                <td style="color:#ff6a00;"><b>[[${orderId}]]</b></td>
+                            </tr>
+                            <tr>
+                                <td><b>Total Amount:</b></td>
+                                <td style="color:#28a745; font-size:18px;"><b>$[[${amount}]]</b></td>
+                            </tr>
+                        </table>
 
-<p>
-    Warm regards,<br/>
-    <b>Mcart Store</b><br/>
-    Contact Details: +91-9876543210
-</p>
+                        <!-- Items -->
+                        <h3 style="margin-bottom:10px; color:#444;">🧾 Items:</h3>
+                        <ul style="padding-left:20px;">
+                            <li th:each="item : ${items}" style="margin-bottom:8px;">
+                                [[${item.product.name}]]
+                                <span style="color:#777;">x [[${item.quantity}]]</span>
+                            </li>
+                        </ul>
 
-<p><i>Happy Shopping!</i></p>
+                        <p style="margin-top:20px;">
+                            Your order is being processed. We’ll notify you once it is shipped 🚚
+                        </p>
+
+                        <!-- CTA -->
+                        <div style="text-align:center; margin:25px 0;">
+                            <a href="#" style="background:#ff6a00; color:#fff; padding:12px 25px; text-decoration:none; border-radius:25px; font-weight:bold;">
+                                Track Your Order
+                            </a>
+                        </div>
+
+                        <p>
+                            Need help? Contact us anytime — we’re here for you 😊
+                        </p>
+
+                    </td>
+                </tr>
+
+                <!-- Footer -->
+                <tr>
+                    <td style="background:#1f2937; color:#ccc; text-align:center; padding:15px; font-size:13px;">
+                        <p style="margin:5px 0;"><b style="color:#fff;">Mcart Store</b></p>
+                        <p style="margin:5px 0;">📞 +91-9876543210</p>
+                        <p style="margin:5px 0;">Happy Shopping! 🛒</p>
+                    </td>
+                </tr>
+
+            </table>
+
+        </td>
+        ```
+
+    </tr>
+</table>
 
 </body>
 </html>

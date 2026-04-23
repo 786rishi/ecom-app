@@ -36,9 +36,9 @@ const Contact: React.FC = () => {
                 <div className="map-info">
                   <p className="map-address">
                     <strong>Store Address:</strong><br />
-                    123 Commerce Street<br />
-                    New York, NY 10001<br />
-                    United States
+                    Chaman Pura, Rohtak<br />
+                    Haryana<br />
+                    India
                   </p>
                 </div>
               </Card.Body>
@@ -72,7 +72,7 @@ const Contact: React.FC = () => {
                   </div>
                   <div className="contact-info">
                     <h4>Mobile Number</h4>
-                    <p><a href="tel:+918708126635">+91 87081 26635</a></p>
+                    <p><a href="tel:+918708126635">+91 87081 26600</a></p>
                   </div>
                 </div>
 

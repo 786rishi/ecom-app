@@ -53,7 +53,7 @@ public class ProductService {
         product.setActive(true);
         Product saved = repository.save(product);
 
-        // 🔥 sync to ES
+        // sync to ES
         indexProduct(saved);
 
         inventoryClient.add(saved.getId(), product.getAvailableQuantity());

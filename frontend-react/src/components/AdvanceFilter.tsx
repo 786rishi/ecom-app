@@ -204,7 +204,7 @@ const AdvanceFilter: React.FC<AdvanceFilterProps> = ({
           </Col>
 
           {/* Minimum Rating */}
-          <Col md={6} className="mb-3">
+          {/* <Col md={6} className="mb-3">
             <Form.Group>
               <Form.Label>Minimum Rating</Form.Label>
               <Form.Select
@@ -219,7 +219,7 @@ const AdvanceFilter: React.FC<AdvanceFilterProps> = ({
                 <option value="5">5 Stars Only</option>
               </Form.Select>
             </Form.Group>
-          </Col>
+          </Col> */}
 
           {/* Sort Options */}
           <Col md={6} className="mb-3">

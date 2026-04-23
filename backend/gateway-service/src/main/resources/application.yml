@@ -50,12 +50,12 @@ spring:
           filters:
             - StripPrefix=1
 
-        - id: user-service
-          uri: http://user-service:8081
-          predicates:
-            - Path=/users/**
-          filters:
-            - StripPrefix=1
+#        - id: user-service
+#          uri: http://user-service:8081
+#          predicates:
+#            - Path=/users/**
+#          filters:
+#            - StripPrefix=1
 
         - id: content-service
           uri: ${CONTENT_SERVICE_URI}

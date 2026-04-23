@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Container, Card, Row, Col, Badge, Spinner, Alert } from 'react-bootstrap';
 import './NewsAndEvents.css';
 
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
+
 interface NewsItem {
   id: string;
   title: string;
@@ -29,7 +31,7 @@ const NewsAndEvents: React.FC = () => {
   const fetchNewsItems = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:8090/content/content/published');
+      const response = await fetch(`${API_BASE_URL}/content/content/published`);
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);

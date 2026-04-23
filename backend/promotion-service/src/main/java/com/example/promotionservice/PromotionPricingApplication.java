@@ -17,6 +17,7 @@ public class PromotionPricingApplication {
     @Value("${spring.application.name}")
     private String appName;
 
+
     @GetMapping("/hello")
     public String hello() {
         return "Hello from " + appName;

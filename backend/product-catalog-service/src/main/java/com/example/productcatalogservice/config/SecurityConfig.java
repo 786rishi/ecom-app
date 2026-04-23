@@ -26,6 +26,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/products/**").permitAll()
                         .requestMatchers("/products/ids").permitAll()
+                        .requestMatchers("/actuator/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/products").hasRole("ADMIN") // 🔥 restrict
                         .anyRequest().authenticated()
                 )

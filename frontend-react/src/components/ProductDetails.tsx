@@ -241,17 +241,15 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({
 
               {/* Add to Cart Button */}
               <div className="mb-4">
-                <ProtectedComponent>
-                  <Button
-                    variant="primary"
-                    size="lg"
-                    className="w-100"
-                    disabled={!product.inStock}
-                    onClick={handleAddToCart}
-                  >
-                    {product.inStock ? 'Add to Cart' : 'Out of Stock'}
-                  </Button>
-                </ProtectedComponent>
+                <Button
+                  variant="primary"
+                  size="lg"
+                  className="w-100"
+                  disabled={!product.inStock || !isAuthenticated}
+                  onClick={handleAddToCart}
+                >
+                  {product.inStock ? 'Add to Cart' : 'Out of Stock'}
+                </Button>
                 {!isAuthenticated && (
                   <Alert variant="info" className="mt-3">
                     Please <strong>login</strong> to add items to your cart.

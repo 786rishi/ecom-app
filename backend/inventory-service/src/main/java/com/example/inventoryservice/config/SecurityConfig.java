@@ -24,7 +24,7 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/inventory/**").permitAll() // default
+                        .requestMatchers("/inventory/**").permitAll()
                         .requestMatchers("/actuator/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/inventory/add/**").hasRole("ADMIN") // 🔥 restrict
                         .anyRequest().authenticated()

@@ -1,6 +1,6 @@
 import { Testimonial, TestimonialFormData, TestimonialResponse, CreateTestimonialResponse } from '../types/testimonial';
 
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL; 
 
 export const testimonialService = {
   // Get all testimonials for a product

@@ -24,4 +24,6 @@ public class ProductCatalogApplication {
         return "Hello from " + appName;
     }
 
+
+
 }

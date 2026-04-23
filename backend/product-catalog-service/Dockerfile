@@ -7,6 +7,7 @@ RUN apk add --no-cache curl openssl
 COPY server.crt /tmp/server.crt
 
 # Import into JVM truststore
+
 RUN keytool -import -trustcacerts \
     -alias keycloak \
     -file /tmp/server.crt \

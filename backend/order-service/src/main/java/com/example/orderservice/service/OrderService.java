@@ -108,7 +108,7 @@ public class OrderService {
         order.setStatus("CONFIRMED");
 
         cartService.clearCart(order.getUserId());
-       // emailService.sendOrderConfirmationEmail("786rishisaini@gmail.com", order);
+        emailService.sendOrderConfirmationEmail("786rishisaini@gmail.com", order);
 
         return repository.save(order);
     }

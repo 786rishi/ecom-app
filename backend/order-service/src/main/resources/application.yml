@@ -55,3 +55,7 @@ inventory:
 product:
   service:
     url: ${PRODUCT_SERVICE_URI}
+
+smtp:
+  username: ${MAIL_USERNAME}
+  password: ${MAIL_PASSWORD}

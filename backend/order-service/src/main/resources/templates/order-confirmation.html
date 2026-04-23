@@ -15,7 +15,7 @@
 <h3>Items:</h3>
 <ul>
     <li th:each="item : ${items}">
-        [[${item.productId}]] x [[${item.quantity}]]
+        [[${item.product.name}]] x [[${item.quantity}]]
     </li>
 </ul>
 

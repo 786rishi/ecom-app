@@ -8,10 +8,10 @@ COPY server.crt /tmp/server.crt
 
 # Import into JVM truststore
 
-RUN keytool -import -trustcacerts \
+RUN keytool -importcert \
     -alias keycloak \
     -file /tmp/server.crt \
-    -keystore $JAVA_HOME/lib/security/cacerts \
+    -keystore /usr/lib/jvm/java-17-amazon-corretto/lib/security/cacerts \
     -storepass changeit \
     -noprompt
 

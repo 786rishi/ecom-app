@@ -6,7 +6,7 @@ export const testimonialService = {
   // Get all testimonials for a product
   async getTestimonialsByProductId(productId: string): Promise<TestimonialResponse> {
     try {
-      const response = await fetch(`${API_BASE_URL}/testimonials/${productId}`);
+      const response = await fetch(`${API_BASE_URL}/products/products/testimonials/${productId}`);
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -29,7 +29,7 @@ export const testimonialService = {
   // Create a new testimonial
   async createTestimonial(testimonialData: TestimonialFormData): Promise<CreateTestimonialResponse> {
     try {
-      const response = await fetch(`${API_BASE_URL}/testimonials`, {
+      const response = await fetch(`${API_BASE_URL}/products/products/testimonials`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

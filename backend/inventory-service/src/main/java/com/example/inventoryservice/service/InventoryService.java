@@ -83,7 +83,7 @@ public class InventoryService {
 
 
             Inventory saved = repository.save(inventory);
-            // 🔥 SYNC TO PRODUCT SERVICE
+            // SYNC TO PRODUCT SERVICE
             productClient.updateInventory(productId, saved.getAvailableQuantity());
             return saved;
 
@@ -104,7 +104,7 @@ public class InventoryService {
         inventory.setUpdatedAt(LocalDateTime.now());
 
         Inventory saved = repository.save(inventory);
-        // 🔥 SYNC TO PRODUCT SERVICE
+        // SYNC TO PRODUCT SERVICE
         productClient.updateInventory(productId, saved.getAvailableQuantity());
         return saved;    }
 

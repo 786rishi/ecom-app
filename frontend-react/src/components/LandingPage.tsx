@@ -30,7 +30,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onBrowseAsGuest, onA
         <Container>
           <Row className="align-items-center">
             <Col md={6}>
-              <h1 className="display-4 fw-bold mb-4">🛍️ Welcome to Mcart Store</h1>
+              <h1 className="display-4 fw-bold mb-4">🛍️ Welcome to Mcart Store 5fbddc57-d3a0-43d2-b7b6-64c9b440043c</h1>
               <p className="lead mb-4">
                 Discover amazing products at great prices. Shop with confidence and enjoy a seamless shopping experience.
               </p>

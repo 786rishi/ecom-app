@@ -516,9 +516,9 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ show, onHide }) => {
                   </Col>
                 </Row>
 
-                <Alert variant="info" className="small">
+                {/* <Alert variant="info" className="small">
                   <strong>Demo Mode:</strong> This is a demo checkout. No actual payment will be processed.
-                </Alert>
+                </Alert> */}
               </Col>
             </Row>
             

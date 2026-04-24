@@ -8,7 +8,6 @@ interface AdminProtectedComponentProps {
 const AdminProtectedComponent: React.FC<AdminProtectedComponentProps> = ({ children }) => {
   const { auth } = useAuth();
 
-  // Use exact same admin check logic as ProfessionalNavBar (line 164)
   const isAdmin = auth.isAuthenticated && auth.user?.roles?.includes('admin');
 
   if (!isAdmin) {

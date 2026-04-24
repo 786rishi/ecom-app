@@ -21,6 +21,22 @@ A modern, scalable e-commerce platform built with microservices architecture. Mc
 - **Authentication**: Keycloak integration
 - **Features**: Responsive design, shopping cart, user dashboard
 
+## Design Diagram
+
+<!-- Add your design diagram image here -->
+
+![alt text](<ecom final.drawio.png>)
+
+*The design diagram illustrates the overall system architecture, component relationships, and data flow between different services.*
+
+## Deployment Diagram
+
+<!-- Add your deployment diagram image here -->
+
+![alt text](<deployment diagram final.drawio.png>)
+
+*The deployment diagram shows how the application is deployed.*
+
 ## Deployment
 
 ### AWS Infrastructure

@@ -24,7 +24,6 @@ A modern, scalable e-commerce platform built with microservices architecture. Mc
 ## Design Diagram
 
 <!-- Add your design diagram image here -->
-![Design Diagram]
 
 ![alt text](<ecom final.drawio.png>)
 
@@ -33,7 +32,6 @@ A modern, scalable e-commerce platform built with microservices architecture. Mc
 ## Deployment Diagram
 
 <!-- Add your deployment diagram image here -->
-![Deployment Diagram]
 
 ![alt text](<deployment diagram final.drawio.png>)
 
